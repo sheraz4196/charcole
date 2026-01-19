@@ -3,8 +3,12 @@ import cors from "cors";
 import { env } from "./config/env.js";
 import { HTTP_STATUS, ERROR_MESSAGES } from "./config/constants.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
-import { sendError } from "./utils/response.js";
+import {
+  errorHandler,
+  asyncHandler,
+  NotFoundError,
+} from "./middlewares/errorHandler.js";
+import { sendSuccess } from "./utils/response.js";
 import { logger } from "./utils/logger.js";
 import routes from "./routes.js";
 
@@ -40,21 +44,32 @@ app.use(requestLogger);
 // API Routes
 app.use("/api", routes);
 
-// Health check root endpoint
-app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to Charcole API",
-    version: "1.0.0",
-    environment: env.NODE_ENV,
+// Root health endpoint
+app.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      {
+        message: "Welcome to Charcole API",
+        version: "1.0.0",
+        environment: env.NODE_ENV,
+      },
+      200,
+      "API is online",
+    );
+  }),
+);
+
+// 404 handler
+app.use((req, res, next) => {
+  throw new NotFoundError(`${req.method} ${req.path}`, {
+    method: req.method,
+    path: req.path,
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  sendError(res, ERROR_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
-});
-
-// Global error handler (must be last)
+// Global error handler (MUST be last)
 app.use(errorHandler);
 
-logger.info("Express app configured");
+logger.info("Express app configured successfully");

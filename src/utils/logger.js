@@ -7,6 +7,7 @@ const COLORS = {
   green: "\x1b[32m",
   blue: "\x1b[36m",
   gray: "\x1b[90m",
+  magenta: "\x1b[35m",
 };
 
 const LOG_LEVELS = {
@@ -22,6 +23,11 @@ const formatLog = (level, message, data) => {
   const timestamp = new Date().toISOString();
   const dataStr = data ? ` ${JSON.stringify(data)}` : "";
   return `[${timestamp}] ${level}:${dataStr ? " " + message + dataStr : " " + message}`;
+};
+
+const formatStack = (stack) => {
+  if (!stack) return "";
+  return `\n${stack}`;
 };
 
 export const logger = {
@@ -49,11 +55,19 @@ export const logger = {
     }
   },
 
-  error: (message, data) => {
+  error: (message, data, stack) => {
     if (getCurrentLogLevel() <= LOG_LEVELS.error) {
+      const stackTrace = formatStack(stack);
       console.error(
-        `${COLORS.red}${formatLog("ERROR", message, data)}${COLORS.reset}`,
+        `${COLORS.red}${formatLog("ERROR", message, data)}${stackTrace}${COLORS.reset}`,
       );
     }
+  },
+
+  fatal: (message, data, stack) => {
+    const stackTrace = formatStack(stack);
+    console.error(
+      `${COLORS.red}${COLORS.magenta}${formatLog("FATAL", message, data)}${stackTrace}${COLORS.reset}`,
+    );
   },
 };
