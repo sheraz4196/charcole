@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 
+// Create express app
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -19,13 +18,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
+// Error handling middleware (must be last)
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+  res.status(500).json({
+    error: "Something went wrong!",
+  });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+module.exports = app;
