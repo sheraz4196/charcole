@@ -1,0 +1,24 @@
+{
+  "name": "create-charcole",
+  "version": "1.0.0",
+  "description": "Production-ready Express backend starter with engineering guardrails.",
+  "license": "MIT",
+  "author": {
+    "name": "Sheraz Manzoor",
+    "email": "sheraz.dev121@gmail.com"
+  },
+  "bin": {
+    "create-charcole": "bin/index.js"
+  },
+  "keywords": [
+    "express",
+    "backend",
+    "starter",
+    "boilerplate",
+    "production",
+    "charcole"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}
