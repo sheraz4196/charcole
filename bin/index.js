@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 
 const projectName = process.argv[2];
 
@@ -22,11 +23,9 @@ if (fs.existsSync(targetDir)) {
 
 function copyDir(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
-
   for (const file of fs.readdirSync(src)) {
     const srcPath = path.join(src, file);
     const destPath = path.join(dest, file);
-
     if (fs.statSync(srcPath).isDirectory()) {
       copyDir(srcPath, destPath);
     } else {
@@ -35,9 +34,24 @@ function copyDir(src, dest) {
   }
 }
 
+function detectPackageManager() {
+  try {
+    execSync("bun -v", { stdio: "ignore" });
+    return "bun";
+  } catch {}
+  try {
+    execSync("pnpm -v", { stdio: "ignore" });
+    return "pnpm";
+  } catch {}
+  try {
+    execSync("yarn -v", { stdio: "ignore" });
+    return "yarn";
+  } catch {}
+  return "npm";
+}
+
 try {
   console.log("🔥 Creating Charcole app...");
-
   copyDir(templateDir, targetDir);
 
   const pkgPath = path.join(targetDir, "package.json");
@@ -47,14 +61,26 @@ try {
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   }
 
-  console.log("✅ Charcole app created successfully!");
-  console.log("");
-  console.log("Next steps:");
+  console.log("✅ Project created successfully!");
+
+  const pkgManager = detectPackageManager();
+  console.log(`📦 Installing dependencies using ${pkgManager}...`);
+
+  const installCmd =
+    pkgManager === "bun"
+      ? "bun install"
+      : pkgManager === "yarn"
+        ? "yarn"
+        : pkgManager === "pnpm"
+          ? "pnpm install"
+          : "npm install";
+
+  execSync(installCmd, { cwd: targetDir, stdio: "inherit" });
+
+  console.log("\n🚀 All set!");
   console.log(`  cd ${projectName}`);
-  console.log("  npm install");
   console.log("  npm run dev");
-  console.log("");
-  console.log("🧱 Built with Charcole — Express, but engineered.");
+  console.log("\n🧱 Built with Charcole — Express, but engineered.");
 } catch (err) {
   console.error("❌ Failed to create Charcole app.");
   console.error(err.message);
