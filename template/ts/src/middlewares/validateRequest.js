@@ -1,0 +1,42 @@
+import { ValidationError } from "../utils/AppError.js";
+
+/**
+ * Request validation middleware
+ *
+ * Validates request body, query, and params against a Zod schema
+ * Throws ValidationError if validation fails
+ *
+ * Example:
+ * const schema = z.object({
+ *   body: z.object({ name: z.string() }),
+ *   query: z.object({ page: z.coerce.number().optional() }),
+ * });
+ *
+ * router.post('/items', validateRequest(schema), handler)
+ */
+export const validateRequest = (schema) => {
+  return async (req, res, next) => {
+    try {
+      // Validate request
+      const validated = await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
+
+      // Attach validated data
+      req.validatedData = validated;
+      next();
+    } catch (error) {
+      if (error.name === "ZodError") {
+        const errors = error.errors.map((e) => ({
+          field: e.path.join("."),
+          message: e.message,
+          code: e.code,
+        }));
+        throw new ValidationError("Request validation failed", errors);
+      }
+      next(error);
+    }
+  };
+};
