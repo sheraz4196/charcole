@@ -1,3 +1,5 @@
+import { Request, Response, NextFunction } from "express";
+import { z, ZodError } from "zod";
 import { ValidationError } from "../utils/AppError.js";
 
 /**
@@ -14,21 +16,23 @@ import { ValidationError } from "../utils/AppError.js";
  *
  * router.post('/items', validateRequest(schema), handler)
  */
-export const validateRequest = (schema) => {
-  return async (req, res, next) => {
+export const validateRequest = (schema: z.AnyZodObject) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
-      // Validate request
       const validated = await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
 
-      // Attach validated data
       req.validatedData = validated;
       next();
     } catch (error) {
-      if (error.name === "ZodError") {
+      if (error instanceof ZodError) {
         const errors = error.errors.map((e) => ({
           field: e.path.join("."),
           message: e.message,
