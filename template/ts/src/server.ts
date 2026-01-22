@@ -1,8 +1,8 @@
 import "dotenv/config";
 
-import { app } from "./app.js";
-import { env } from "./config/env.js";
-import { logger } from "./utils/logger.js";
+import { app } from "./app";
+import { env } from "./config/env";
+import { logger } from "./utils/logger";
 
 const PORT = env.PORT;
 
@@ -13,9 +13,9 @@ const server = app.listen(PORT, () => {
   });
 });
 
-// Graceful shutdown
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = (signal: string): void => {
   logger.warn(`${signal} signal received: closing HTTP server`);
+
   server.close(() => {
     logger.info("HTTP server closed");
     process.exit(0);
@@ -25,14 +25,18 @@ const gracefulShutdown = (signal) => {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-// Unhandled promise rejections
-process.on("unhandledRejection", (reason, promise) => {
-  logger.error("Unhandled Rejection at:", { promise, reason });
-  process.exit(1);
-});
+process.on(
+  "unhandledRejection",
+  (reason: unknown, promise: Promise<unknown>) => {
+    logger.error("Unhandled Rejection at:", { promise, reason });
+    process.exit(1);
+  },
+);
 
-// Uncaught exceptions
-process.on("uncaughtException", (error) => {
-  logger.error("Uncaught Exception:", { error: error.message });
+process.on("uncaughtException", (error: Error) => {
+  logger.error("Uncaught Exception:", {
+    message: error.message,
+    stack: error.stack,
+  });
   process.exit(1);
 });
