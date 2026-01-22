@@ -5,19 +5,20 @@ import {
   AppError,
   ValidationError,
   InternalServerError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  BadRequestError,
 } from "../utils/AppError.js";
 import { env } from "../config/env.js";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 
-/**
- * Normalize different error types to AppError
- */
-const normalizeError = (err) => {
-  // Already an AppError
+const normalizeError = (err: unknown): AppError => {
   if (err instanceof AppError) {
     return err;
   }
 
-  // Zod validation error
   if (err instanceof ZodError) {
     const errors = err.errors.map((e) => ({
       field: e.path.join("."),
@@ -27,46 +28,56 @@ const normalizeError = (err) => {
     return new ValidationError(ERROR_MESSAGES.VALIDATION_ERROR, errors);
   }
 
-  // Syntax errors (programmer error)
-  if (err instanceof SyntaxError) {
-    return new InternalServerError("Syntax error in application code", err, {
-      type: "SyntaxError",
-    });
+  if (err instanceof Error) {
+    if (err instanceof SyntaxError) {
+      return new InternalServerError("Syntax error in application code", err, {
+        type: "SyntaxError",
+      });
+    }
+
+    if (err instanceof TypeError) {
+      return new InternalServerError("Type error in application", err, {
+        type: "TypeError",
+      });
+    }
+
+    if (err instanceof ReferenceError) {
+      return new InternalServerError("Reference error in application", err, {
+        type: "ReferenceError",
+      });
+    }
+
+    if (err instanceof RangeError) {
+      return new InternalServerError("Range error in application", err, {
+        type: "RangeError",
+      });
+    }
+
+    return new InternalServerError(
+      err.message || ERROR_MESSAGES.SERVER_ERROR,
+      err,
+      { type: "UnknownError" },
+    );
   }
 
-  // Type errors (programmer error)
-  if (err instanceof TypeError) {
-    return new InternalServerError("Type error in application", err, {
-      type: "TypeError",
-    });
-  }
+  const errorMessage =
+    typeof err === "string"
+      ? err
+      : err &&
+          typeof err === "object" &&
+          "message" in err &&
+          typeof err.message === "string"
+        ? err.message
+        : ERROR_MESSAGES.SERVER_ERROR;
 
-  // Reference errors (programmer error)
-  if (err instanceof ReferenceError) {
-    return new InternalServerError("Reference error in application", err, {
-      type: "ReferenceError",
-    });
-  }
-
-  // Range errors
-  if (err instanceof RangeError) {
-    return new InternalServerError("Range error in application", err, {
-      type: "RangeError",
-    });
-  }
-
-  // Generic error (unknown)
   return new InternalServerError(
-    err.message || ERROR_MESSAGES.SERVER_ERROR,
-    err,
+    errorMessage,
+    err instanceof Error ? err : new Error(String(err)),
     { type: "UnknownError" },
   );
 };
 
-/**
- * Log error based on type (operational vs programmer)
- */
-const logError = (appError, req) => {
+const logError = (appError: AppError, req: Request): void => {
   const errorDetails = {
     type: appError.isOperational ? "OPERATIONAL" : "PROGRAMMER",
     code: appError.code,
@@ -79,11 +90,9 @@ const logError = (appError, req) => {
     userAgent: req.get("user-agent"),
   };
 
-  // Operational errors: normal logging
   if (appError.isOperational) {
     logger.warn(`Operational Error: ${appError.code}`, errorDetails);
   } else {
-    // Programmer errors: detailed logging with stack
     logger.error(
       `Programmer Error: ${appError.code}`,
       errorDetails,
@@ -91,45 +100,48 @@ const logError = (appError, req) => {
     );
   }
 
-  // Log validation errors separately
-  if (appError instanceof ValidationError && appError.errors) {
-    logger.debug("Validation errors", { errors: appError.errors });
+  if (
+    appError instanceof ValidationError &&
+    (appError as ValidationError).errors
+  ) {
+    const validationError = appError as ValidationError;
+    logger.debug("Validation errors", { errors: validationError.errors });
   }
 
-  // Log cause if present
   if (appError.cause) {
-    logger.debug("Error cause", { cause: appError.cause.message });
+    const causeMessage =
+      appError.cause instanceof Error
+        ? appError.cause.message
+        : String(appError.cause);
+    logger.debug("Error cause", { cause: causeMessage });
   }
 };
 
-/**
- * Send error response
- */
-const sendErrorResponse = (res, appError) => {
+const sendErrorResponse = (res: Response, appError: AppError): void => {
   const statusCode = appError.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
 
-  // In production, hide internal details for programmer errors
   if (!appError.isOperational && env.isProduction) {
-    return res.status(statusCode).json({
+    res.status(statusCode).json({
       success: false,
       message: ERROR_MESSAGES.SERVER_ERROR,
       code: "INTERNAL_SERVER_ERROR",
       timestamp: new Date().toISOString(),
     });
+    return;
   }
 
-  // Return detailed error in development
-  const response = appError.toJSON
-    ? appError.toJSON()
-    : {
-        success: false,
-        message: appError.message,
-        code: appError.code,
-        statusCode,
-        timestamp: new Date().toISOString(),
-      };
+  const response =
+    (appError as any).toJSON && typeof (appError as any).toJSON === "function"
+      ? (appError as any).toJSON()
+      : {
+          success: false,
+          message: appError.message,
+          code: appError.code,
+          statusCode,
+          timestamp: new Date().toISOString(),
+        };
 
-  return res.status(statusCode).json(response);
+  res.status(statusCode).json(response);
 };
 
 /**
@@ -144,14 +156,16 @@ const sendErrorResponse = (res, appError) => {
  * - Hides sensitive info in production
  * - Formats JSON responses consistently
  */
-export const errorHandler = (err, req, res, next) => {
-  // Normalize the error
+export const errorHandler = (
+  err: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   const appError = normalizeError(err);
 
-  // Log the error
   logError(appError, req);
 
-  // Send response
   sendErrorResponse(res, appError);
 };
 
@@ -162,9 +176,24 @@ export const errorHandler = (err, req, res, next) => {
  * Example:
  * router.get('/users/:id', asyncHandler(getUserHandler))
  */
-export const asyncHandler = (fn) => {
-  return (req, res, next) => {
-    return Promise.resolve(fn(req, res, next)).catch(next);
+export const asyncHandler = (fn: RequestHandler): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction): any => {
+    try {
+      const result = fn(req, res, next);
+
+      if (
+        result &&
+        typeof result === "object" &&
+        "then" in result &&
+        typeof result.then === "function"
+      ) {
+        return (result as Promise<any>).catch(next);
+      }
+
+      return result;
+    } catch (err) {
+      return next(err);
+    }
   };
 };
 
@@ -177,4 +206,4 @@ export {
   NotFoundError,
   ConflictError,
   BadRequestError,
-} from "../utils/AppError.js";
+};
