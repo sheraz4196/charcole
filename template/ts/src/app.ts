@@ -14,10 +14,8 @@ import routes from "./routes";
 
 export const app = express();
 
-// Trust proxy (important for prod / reverse proxies)
 app.set("trust proxy", 1);
 
-// CORS configuration
 app.use(
   cors({
     origin: env.CORS_ORIGIN,
@@ -27,24 +25,19 @@ app.use(
   }),
 );
 
-// Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Request timeout
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.setTimeout(env.REQUEST_TIMEOUT);
   res.setTimeout(env.REQUEST_TIMEOUT);
   next();
 });
 
-// Request logging
 app.use(requestLogger);
 
-// API routes
 app.use("/api", routes);
 
-// Root endpoint
 app.get(
   "/",
   asyncHandler(async (_req: Request, res: Response) => {
@@ -61,7 +54,6 @@ app.get(
   }),
 );
 
-// 404 handler
 app.use((req: Request) => {
   throw new NotFoundError(`${req.method} ${req.path}`, {
     method: req.method,
@@ -69,7 +61,6 @@ app.use((req: Request) => {
   });
 });
 
-// Global error handler (must be last)
 app.use(errorHandler);
 
 logger.info("Express app configured successfully");
