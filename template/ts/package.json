@@ -4,9 +4,9 @@
   "description": "Production-grade Node.js Express API",
   "main": "src/server.js",
   "scripts": {
-    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only --loader ts-node/esm src/server.ts",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
     "lint": "echo 'Add linting here'",
     "test": "echo 'Add tests here'"
   },
