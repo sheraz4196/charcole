@@ -9,7 +9,9 @@ export const HTTP_STATUS = {
   UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
-};
+} as const;
+
+export type HttpStatus = typeof HTTP_STATUS;
 
 export const ERROR_MESSAGES = {
   VALIDATION_ERROR: "Validation failed",
@@ -17,4 +19,9 @@ export const ERROR_MESSAGES = {
   UNAUTHORIZED: "Unauthorized",
   SERVER_ERROR: "Internal server error",
   BAD_REQUEST: "Bad request",
-};
+} as const;
+
+export type ErrorMessages = typeof ERROR_MESSAGES;
+
+export type HttpStatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];
+export type ErrorMessage = (typeof ERROR_MESSAGES)[keyof typeof ERROR_MESSAGES];
