@@ -10,17 +10,31 @@ const envSchema = z.object({
   REQUEST_TIMEOUT: z.coerce.number().default(30000),
 });
 
-const parseEnv = () => {
+type EnvSchema = z.infer<typeof envSchema>;
+
+const parseEnv = (): EnvSchema => {
   try {
     return envSchema.parse(process.env);
   } catch (error) {
-    console.error("❌ Invalid environment variables:", error.errors);
+    if (error instanceof z.ZodError) {
+      console.error("❌ Invalid environment variables:");
+      error.errors.forEach((err) => {
+        console.error(`  - ${err.path.join(".")}: ${err.message}`);
+      });
+    } else {
+      console.error("❌ Failed to parse environment variables:", error);
+    }
     process.exit(1);
   }
 };
 
-export const env = parseEnv();
+const parsedEnv = parseEnv();
 
-export const isDevelopment = env.NODE_ENV === "development";
-export const isProduction = env.NODE_ENV === "production";
-export const isTest = env.NODE_ENV === "test";
+export const env = {
+  ...parsedEnv,
+  isDevelopment: parsedEnv.NODE_ENV === "development",
+  isProduction: parsedEnv.NODE_ENV === "production",
+  isTest: parsedEnv.NODE_ENV === "test",
+} as const;
+
+export type Env = typeof env;
