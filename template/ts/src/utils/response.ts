@@ -1,17 +1,24 @@
+import type { Response } from "express";
+
+/**
+ * Standard success response shape
+ */
+export type SuccessResponse<T> = {
+  success: true;
+  message: string;
+  data: T;
+  timestamp: string;
+};
+
 /**
  * Send success response
- *
- * @param {Response} res - Express response object
- * @param {*} data - Response data
- * @param {number} statusCode - HTTP status code (default: 200)
- * @param {string} message - Success message (default: 'Success')
  */
-export const sendSuccess = (
-  res,
-  data,
+export const sendSuccess = <T>(
+  res: Response,
+  data: T,
   statusCode = 200,
   message = "Success",
-) => {
+): Response<SuccessResponse<T>> => {
   return res.status(statusCode).json({
     success: true,
     message,
@@ -21,23 +28,65 @@ export const sendSuccess = (
 };
 
 /**
- * Send error response (DEPRECATED - use AppError instead)
- * This is kept for backward compatibility
+ * Error response shape (legacy)
  */
-export const sendError = (res, message, statusCode = 500, errors = null) => {
+type ErrorResponse = {
+  success: false;
+  message: string;
+  errors?: unknown;
+  timestamp: string;
+};
+
+/**
+ * Send error response (DEPRECATED — use AppError instead)
+ * Kept for backward compatibility
+ */
+export const sendError = (
+  res: Response,
+  message: string,
+  statusCode = 500,
+  errors: unknown = null,
+): Response<ErrorResponse> => {
   return res.status(statusCode).json({
     success: false,
     message,
-    ...(errors && { errors }),
+    ...(errors !== null && { errors }),
     timestamp: new Date().toISOString(),
   });
 };
 
 /**
- * Send validation error response (DEPRECATED - use ValidationError instead)
- * This is kept for backward compatibility
+ * Validation error item (Zod / Joi–style compatible)
  */
-export const sendValidationError = (res, errors, statusCode = 422) => {
+type ValidationIssue = {
+  path: (string | number)[];
+  message: string;
+  code?: string;
+};
+
+/**
+ * Validation error response shape
+ */
+type ValidationErrorResponse = {
+  success: false;
+  message: string;
+  errors: {
+    field: string;
+    message: string;
+    code?: string;
+  }[];
+  timestamp: string;
+};
+
+/**
+ * Send validation error response (DEPRECATED — use ValidationError instead)
+ * Kept for backward compatibility
+ */
+export const sendValidationError = (
+  res: Response,
+  errors: ValidationIssue[],
+  statusCode = 422,
+): Response<ValidationErrorResponse> => {
   return res.status(statusCode).json({
     success: false,
     message: "Validation failed",
