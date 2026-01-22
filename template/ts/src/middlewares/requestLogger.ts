@@ -1,10 +1,15 @@
+import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger.js";
 
 /**
  * Request logging middleware
  * Logs all HTTP requests with method, path, status, duration, and IP
  */
-export const requestLogger = (req, res, next) => {
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   const start = Date.now();
 
   res.on("finish", () => {
@@ -18,7 +23,7 @@ export const requestLogger = (req, res, next) => {
       statusCode,
       durationMs: duration,
       ip: req.ip,
-      userAgent: req.get("user-agent"),
+      userAgent: req.get("user-agent") || undefined,
       ...(isError && { error: true }),
     };
 
