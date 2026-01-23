@@ -20,5 +20,8 @@
   ],
   "engines": {
     "node": ">=16"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
   }
 }
