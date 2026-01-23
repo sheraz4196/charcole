@@ -4,7 +4,7 @@
   "description": "Production-grade Node.js Express API",
   "main": "src/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only --loader ts-node/esm src/server.ts",
+    "dev": "node --loader ts-node/esm src/server.ts",
     "start": "node dist/server.js",
     "build": "tsc",
     "lint": "echo 'Add linting here'",
