@@ -4,8 +4,8 @@ import {
   getHealth,
   createItem,
   createItemSchema,
-} from "./modules/health/controller";
-import { validateRequest } from "./middlewares/validateRequest";
+} from "./modules/health/controller.js";
+import { validateRequest } from "./middlewares/validateRequest.js";
 
 const router = Router();
 

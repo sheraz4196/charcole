@@ -1,16 +1,16 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 
-import { env } from "./config/env";
-import { requestLogger } from "./middlewares/requestLogger";
+import { env } from "./config/env.js";
+import { requestLogger } from "./middlewares/requestLogger.js";
 import {
   errorHandler,
   asyncHandler,
   NotFoundError,
-} from "./middlewares/errorHandler";
-import { sendSuccess } from "./utils/response";
-import { logger } from "./utils/logger";
-import routes from "./routes";
+} from "./middlewares/errorHandler.js";
+import { sendSuccess } from "./utils/response.js";
+import { logger } from "./utils/logger.js";
+import routes from "./routes.js";
 
 export const app = express();
 
@@ -45,7 +45,7 @@ app.get(
       res,
       {
         message: "Welcome to Charcole API",
-        version: "1.0.0",
+        version: "2.0.0",
         environment: env.NODE_ENV,
       },
       200,
