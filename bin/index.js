@@ -31,21 +31,23 @@ const {
         ],
         initial: 0,
       },
-      {
-        type: "multiselect",
-        name: "features",
-        message: "Select features to include:",
-        choices: [
-          { title: "JWT Authentication", value: "auth" },
-          { title: "Swagger Docs", value: "swagger", selected: true },
-          { title: "Docker Support", value: "docker" },
-          { title: "ESLint + Prettier", value: "lint", selected: true },
-        ],
-        min: 0,
-      },
+      // TODO: Uncomment when features are implemented
+      // {
+      //   type: "multiselect",
+      //   name: "features",
+      //   message: "Select features to include:",
+      //   choices: [
+      //     { title: "JWT Authentication", value: "auth" },
+      //     { title: "Swagger Docs", value: "swagger", selected: true },
+      //     { title: "Docker Support", value: "docker" },
+      //     { title: "ESLint + Prettier", value: "lint", selected: true },
+      //   ],
+      //   min: 0,
+      // },
     ]);
 
-    const { projectName, language, features } = responses;
+    const { projectName, language } = responses;
+    const features = []; // Empty for now, will be responses.features later
     const targetDir = path.join(process.cwd(), projectName);
 
     if (fs.existsSync(targetDir)) {
@@ -57,35 +59,33 @@ const {
 
     console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
 
-    const templateDir = path.join(
-      __dirname,
-      "..",
-      "template",
-      language,
-      "modules",
-    );
+    // Template directory is template/js or template/ts
+    const templateDir = path.join(__dirname, "..", "template", language);
+
     copyTemplateModules(templateDir, targetDir, features);
 
+    // basePackage.json is directly in template/js or template/ts
     const basePkg = JSON.parse(
       fs.readFileSync(path.join(templateDir, "basePackage.json")),
     );
     let mergedPkg = { ...basePkg };
 
-    features.forEach((f) => {
-      const fragPath = path.join(templateDir, f, "package.json");
-      if (fs.existsSync(fragPath)) {
-        const frag = JSON.parse(fs.readFileSync(fragPath));
-        mergedPkg.dependencies = {
-          ...mergedPkg.dependencies,
-          ...frag.dependencies,
-        };
-        mergedPkg.devDependencies = {
-          ...mergedPkg.devDependencies,
-          ...frag.devDependencies,
-        };
-        mergedPkg.scripts = { ...mergedPkg.scripts, ...frag.scripts };
-      }
-    });
+    // TODO: Uncomment when features are implemented
+    // features.forEach((f) => {
+    //   const fragPath = path.join(templateDir, "modules", f, "package.json");
+    //   if (fs.existsSync(fragPath)) {
+    //     const frag = JSON.parse(fs.readFileSync(fragPath));
+    //     mergedPkg.dependencies = {
+    //       ...mergedPkg.dependencies,
+    //       ...frag.dependencies,
+    //     };
+    //     mergedPkg.devDependencies = {
+    //       ...mergedPkg.devDependencies,
+    //       ...frag.devDependencies,
+    //     };
+    //     mergedPkg.scripts = { ...mergedPkg.scripts, ...frag.scripts };
+    //   }
+    // });
 
     mergedPkg.name = projectName;
     fs.writeFileSync(
