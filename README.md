@@ -1,6 +1,6 @@
 # Charcole API
 
-> **Production-grade Node.js Express API with enterprise-level error handling, Zod validation, and structured logging.**
+> **Charcole is a production-grade Node.js backend starter CLI that scaffolds enterprise-ready Express APIs with first-class TypeScript or JavaScript support, centralized error handling, Zod validation, and structured logging out of the box.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express-4.18+-blue.svg)](https://expressjs.com/)
@@ -11,6 +11,7 @@
 
 A **production-ready Node.js Express backend** with:
 
+- ✅ **TypeScript or JavaScript** templates (v2 feature)
 - ✅ **Centralized Error Handling** - Every error flows through one place
 - ✅ **Error Classification** - Operational vs Programmer errors distinguished
 - ✅ **Zod Validation** - Type-safe schema validation with automatic error formatting
@@ -396,3 +397,12 @@ ISC
 **Made for teams that care about code quality and production reliability.** 🚀
 
 Need help? See the [Getting Started Guide](template/README.md) or [Full Documentation](ERROR_HANDLING.md).
+
+## 🆕 What’s New in v2.0
+
+- 🚀 **First-class TypeScript & JavaScript support**
+- 🧠 CLI-driven language selection
+- 🧩 Modular template architecture (future feature expansion)
+- 🧼 Cleaner project generation flow
+- 📦 Improved dependency handling
+- 🏗️ Foundation for built-in auth, Swagger, Docker modules
