@@ -4,8 +4,10 @@
   "description": "Production-grade Node.js Express API",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "tsx watch src/server.ts",
+    "dev:with-nodemon": "nodemon --exec tsx src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
     "lint": "echo 'Add linting here'",
     "test": "echo 'Add tests here'"
   },
@@ -23,6 +25,12 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.10",
+    "nodemon": "^3.0.2",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
