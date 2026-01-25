@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-
+import { userRepo } from "./repositories/user.repo.js";
 import { env } from "./config/env.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import {
@@ -64,3 +64,4 @@ app.use((req: Request) => {
 app.use(errorHandler);
 
 logger.info("Express app configured successfully");
+app.locals.userRepo = userRepo;
