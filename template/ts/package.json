@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.10",
     "nodemon": "^3.0.2",
     "ts-node-dev": "^2.0.0",
