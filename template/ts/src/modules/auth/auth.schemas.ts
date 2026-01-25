@@ -55,6 +55,19 @@ export const publicUserSchema = userSchema.omit({
   passwordHash: true,
 });
 
-export const validate = (schema, data) => {
+// Generic validate function with proper typing
+export const validate = <T extends z.ZodTypeAny>(
+  schema: T,
+  data: unknown,
+): z.infer<T> => {
   return schema.parse(data);
 };
+
+// Export inferred types for use in other files
+export type User = z.infer<typeof userSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type JwtPayload = z.infer<typeof jwtPayloadSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type PublicUser = z.infer<typeof publicUserSchema>;
