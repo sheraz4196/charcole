@@ -2,10 +2,13 @@
   "name": "charcole",
   "version": "2.0.4",
   "description": "Production-grade Node.js Express API",
-  "main": "src/server.ts",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.ts",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc && tsc-alias",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
     "lint": "echo 'Add linting here'",
     "test": "echo 'Add tests here'"
   },
@@ -25,12 +28,15 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.10",
     "nodemon": "^3.0.2",
+    "rimraf": "^6.0.1",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.8",
     "typescript": "^5.9.3"
   }
 }
