@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { USER_ROLES, AUTH_PROVIDERS } from "./auth.constants.js";
+import { USER_ROLES, AUTH_PROVIDERS } from "./auth.constants.ts";
 
 export const emailSchema = z
   .string()

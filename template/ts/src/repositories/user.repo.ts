@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { User } from "../modules/auth/auth.schemas.js";
+import type { User } from "../modules/auth/auth.schemas.ts";
 
 const users: User[] = [];
 

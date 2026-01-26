@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { registerSchema, loginSchema } from "./auth.schemas.js";
+import { registerSchema, loginSchema } from "./auth.schemas.ts";
 import type { z } from "zod";
 
 const SALT_ROUNDS = 10;

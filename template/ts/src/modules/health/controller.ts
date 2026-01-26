@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { sendSuccess } from "../../utils/response.js";
-import { asyncHandler } from "../../middlewares/errorHandler.js";
-import { validateRequest } from "../../middlewares/validateRequest.js";
+import { sendSuccess } from "../../utils/response.ts";
+import { asyncHandler } from "../../middlewares/errorHandler.ts";
+import { validateRequest } from "../../middlewares/validateRequest.ts";
 
 const healthCheckSchema = z.object({
   query: z.object({}),

@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
-import { HTTP_STATUS, ERROR_MESSAGES } from "../config/constants.js";
-import { logger } from "../utils/logger.js";
+import { HTTP_STATUS, ERROR_MESSAGES } from "../config/constants.ts";
+import { logger } from "../utils/logger.ts";
 import {
   AppError,
   ValidationError,

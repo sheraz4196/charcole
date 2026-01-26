@@ -3,9 +3,10 @@
   "version": "2.0.4",
   "description": "Production-grade Node.js Express API",
   "main": "dist/server.js",
+  "type": "module",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
@@ -18,7 +19,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -33,10 +33,9 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.10",
-    "nodemon": "^3.0.2",
     "rimraf": "^6.0.1",
-    "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.8",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }
