@@ -10,9 +10,16 @@ import {
   NotFoundError,
   ConflictError,
   BadRequestError,
-} from "../utils/AppError.js";
-import { env } from "../config/env.js";
-import { Request, Response, NextFunction, RequestHandler } from "express";
+} from "../utils/AppError.ts";
+import { env } from "../config/env.ts";
+import { Request, Response, NextFunction } from "express";
+
+// Custom type for async route handlers
+type AsyncRequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<any> | any;
 
 const normalizeError = (err: unknown): AppError => {
   if (err instanceof AppError) {
@@ -176,24 +183,9 @@ export const errorHandler = (
  * Example:
  * router.get('/users/:id', asyncHandler(getUserHandler))
  */
-export const asyncHandler = (fn: RequestHandler): RequestHandler => {
-  return (req: Request, res: Response, next: NextFunction): any => {
-    try {
-      const result = fn(req, res, next);
-
-      if (
-        result &&
-        typeof result === "object" &&
-        "then" in result &&
-        typeof result.then === "function"
-      ) {
-        return (result as Promise<any>).catch(next);
-      }
-
-      return result;
-    } catch (err) {
-      return next(err);
-    }
+export const asyncHandler = (fn: AsyncRequestHandler) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
 

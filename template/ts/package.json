@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && tsc-alias",
+    "build": "node build.js",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "lint": "echo 'Add linting here'",
@@ -33,6 +33,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.10",
+    "esbuild": "^0.24.2",
     "rimraf": "^6.0.1",
     "tsc-alias": "^1.8.8",
     "tsx": "^4.19.2",
