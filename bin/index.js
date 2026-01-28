@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const prompts = require("prompts");
 
-const { copyTemplateModules } = require("./lib/templateHandler");
+const { copyDir } = require("./lib/templateHandler");
 const {
   detectPackageManager,
   installDependencies,
@@ -79,28 +79,67 @@ function mergePackageJson(base, fragment) {
 
     console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
 
-    // Copy base template + selected modules (auth will be excluded if not selected)
-    copyTemplateModules(templateDir, targetDir, features);
+    // Create target directory
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
 
     // Read basePackage.json (INTERNAL - user never sees this)
     const basePkgPath = path.join(templateDir, "basePackage.json");
     let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
 
-    // Merge feature package.json files for selected modules
-    features.forEach((feature) => {
-      const featurePkgPath = path.join(
-        templateDir,
-        "modules",
-        feature,
-        "package.json",
-      );
+    // Copy base template files (excluding modules and package.json files)
+    const baseEntries = fs.readdirSync(templateDir, { withFileTypes: true });
 
-      if (fs.existsSync(featurePkgPath)) {
-        const featurePkg = JSON.parse(fs.readFileSync(featurePkgPath, "utf-8"));
-        mergedPkg = mergePackageJson(mergedPkg, featurePkg);
-        console.log(`✓ Merged ${feature} module dependencies`);
+    for (const entry of baseEntries) {
+      const srcPath = path.join(templateDir, entry.name);
+      const destPath = path.join(targetDir, entry.name);
+
+      // Skip modules directory and package.json files
+      if (entry.name === "modules" || entry.name === "basePackage.json") {
+        continue;
       }
-    });
+
+      if (entry.isDirectory()) {
+        copyDir(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+
+    // Copy selected feature modules and merge their package.json files
+    const modulesDir = path.join(templateDir, "modules");
+
+    if (fs.existsSync(modulesDir) && features.length > 0) {
+      features.forEach((feature) => {
+        const featurePath = path.join(modulesDir, feature);
+
+        if (fs.existsSync(featurePath)) {
+          console.log(`📦 Including ${feature} module...`);
+
+          // Read and merge package.json from module if it exists
+          const featurePkgPath = path.join(featurePath, "package.json");
+          if (fs.existsSync(featurePkgPath)) {
+            try {
+              const featurePkg = JSON.parse(
+                fs.readFileSync(featurePkgPath, "utf-8"),
+              );
+              mergedPkg = mergePackageJson(mergedPkg, featurePkg);
+              console.log(`✓ Merged ${feature} module dependencies`);
+            } catch (error) {
+              console.warn(
+                `⚠️ Could not parse ${feature}/package.json:`,
+                error.message,
+              );
+            }
+          }
+
+          // Copy module files but exclude package.json
+          // IMPORTANT: Copy files while maintaining directory structure
+          copyModuleFiles(featurePath, targetDir, ["package.json"]);
+        }
+      });
+    }
 
     // Override project name
     mergedPkg.name = projectName;
@@ -117,7 +156,7 @@ function mergePackageJson(base, fragment) {
     console.log("\n✅ Charcole project created successfully!");
     console.log(
       `\n🚀 Next steps:\n  cd ${projectName}\n  ${
-        pkgManager === "npm" ? "npm run dev" : `${pkgManager} dev`
+        pkgManager === "npm" ? "npm run dev" : `${pkgManager} run dev`
       }`,
     );
   } catch (err) {
@@ -125,3 +164,35 @@ function mergePackageJson(base, fragment) {
     process.exit(1);
   }
 })();
+
+/**
+ * Copy module files while maintaining structure
+ */
+function copyModuleFiles(src, destRoot, excludeFiles = []) {
+  function copyRecursive(currentSrc, currentDest) {
+    if (!fs.existsSync(currentDest)) {
+      fs.mkdirSync(currentDest, { recursive: true });
+    }
+
+    const entries = fs.readdirSync(currentSrc, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(currentSrc, entry.name);
+      const destPath = path.join(currentDest, entry.name);
+
+      // Skip excluded files
+      if (excludeFiles.includes(entry.name)) {
+        continue;
+      }
+
+      if (entry.isDirectory()) {
+        copyRecursive(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  }
+
+  // Copy all files from module to destination root
+  copyRecursive(src, destRoot);
+}

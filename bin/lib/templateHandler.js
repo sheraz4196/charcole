@@ -49,8 +49,8 @@ function copyTemplateModules(templateDir, targetDir, features) {
     const srcPath = path.join(templateDir, entry.name);
     const destPath = path.join(targetDir, entry.name);
 
-    // Skip modules directory and all package.json files
-    if (entry.name === "modules" || entry.name.includes("package.json")) {
+    // Skip modules directory and basePackage.json
+    if (entry.name === "modules" || entry.name === "basePackage.json") {
       continue;
     }
 
@@ -63,7 +63,7 @@ function copyTemplateModules(templateDir, targetDir, features) {
 
   // Copy selected feature modules
   const modulesDir = path.join(templateDir, "modules");
-  if (fs.existsSync(modulesDir)) {
+  if (fs.existsSync(modulesDir) && features.length > 0) {
     features.forEach((feature) => {
       const featurePath = path.join(modulesDir, feature);
       if (fs.existsSync(featurePath)) {
