@@ -41,6 +41,7 @@ function mergePackageJson(base, fragment) {
 
   return merged;
 }
+
 function copyDirRecursive(src, dest, excludeFiles = []) {
   if (!fs.existsSync(src)) return;
 
@@ -71,13 +72,33 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
   try {
     console.log("🔥 Welcome to Charcole v2 CLI");
 
-    const responses = await prompts([
-      {
+    // Check if project name is provided as command line argument
+    const args = process.argv.slice(2);
+    let projectNameFromArgs = null;
+
+    if (args.length > 0) {
+      // The first argument that doesn't start with '-' is likely the project name
+      for (const arg of args) {
+        if (!arg.startsWith("-")) {
+          projectNameFromArgs = arg;
+          break;
+        }
+      }
+    }
+
+    const questions = [];
+
+    // Only ask for project name if not provided in command line
+    if (!projectNameFromArgs) {
+      questions.push({
         type: "text",
         name: "projectName",
         message: "Project name:",
         validate: (name) => (name ? true : "Project name is required"),
-      },
+      });
+    }
+
+    questions.push(
       {
         type: "select",
         name: "language",
@@ -93,9 +114,18 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
         message: "Include JWT authentication module?",
         initial: true,
       },
-    ]);
+    );
 
-    const { projectName, language, auth } = responses;
+    const responses = await prompts(questions);
+
+    // Use command line project name if provided, otherwise use prompt response
+    const projectName = projectNameFromArgs || responses.projectName;
+    const { language, auth } = responses;
+
+    if (!projectName || projectName.trim() === "") {
+      console.error("❌ Project name is required");
+      process.exit(1);
+    }
 
     const targetDir = path.join(process.cwd(), projectName);
 
@@ -107,7 +137,9 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
     const pkgManager = detectPackageManager();
     const templateDir = path.join(__dirname, "..", "template", language);
 
-    console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
+    console.log(
+      `\n📁 Creating project "${projectName}" in ${language.toUpperCase()}...`,
+    );
 
     fs.mkdirSync(targetDir, { recursive: true });
 
