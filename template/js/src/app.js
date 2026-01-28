@@ -1,4 +1,5 @@
 import express from "express";
+import { userRepo } from "./repositories/user.repo.js";
 import cors from "cors";
 import { env } from "./config/env.js";
 import { HTTP_STATUS, ERROR_MESSAGES } from "./config/constants.js";
@@ -10,7 +11,7 @@ import {
 } from "./middlewares/errorHandler.js";
 import { sendSuccess } from "./utils/response.js";
 import { logger } from "./utils/logger.js";
-import routes from "./routes.js";
+import routes from "./routes/index.js";
 
 export const app = express();
 
@@ -73,3 +74,5 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 logger.info("Express app configured successfully");
+
+app.locals.userRepo = userRepo;

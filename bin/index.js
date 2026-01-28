@@ -2,25 +2,103 @@
 
 const path = require("path");
 const fs = require("fs");
-const { execSync } = require("child_process");
 const prompts = require("prompts");
-const { copyTemplateModules } = require("./lib/templateHandler");
+
 const {
   detectPackageManager,
   installDependencies,
 } = require("./lib/pkgManager");
 
+/**
+ * Merge base package.json with a feature package.json
+ */
+function mergePackageJson(base, fragment) {
+  const merged = { ...base };
+
+  // Merge dependencies
+  if (fragment.dependencies) {
+    merged.dependencies = {
+      ...merged.dependencies,
+      ...fragment.dependencies,
+    };
+  }
+
+  // Merge devDependencies
+  if (fragment.devDependencies) {
+    merged.devDependencies = {
+      ...merged.devDependencies,
+      ...fragment.devDependencies,
+    };
+  }
+
+  // Merge scripts
+  if (fragment.scripts) {
+    merged.scripts = {
+      ...merged.scripts,
+      ...fragment.scripts,
+    };
+  }
+
+  return merged;
+}
+
+function copyDirRecursive(src, dest, excludeFiles = []) {
+  if (!fs.existsSync(src)) return;
+
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (excludeFiles.includes(entry.name)) {
+      console.log(`Skipping excluded file: ${entry.name}`);
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath, excludeFiles);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 (async function main() {
   try {
-    console.log("🔥 Welcome to Charcole v2 CLI");
+    console.log("🔥 Welcome to Charcole v2.1 CLI");
 
-    const responses = await prompts([
-      {
+    // Check if project name is provided as command line argument
+    const args = process.argv.slice(2);
+    let projectNameFromArgs = null;
+
+    if (args.length > 0) {
+      // The first argument that doesn't start with '-' is likely the project name
+      for (const arg of args) {
+        if (!arg.startsWith("-")) {
+          projectNameFromArgs = arg;
+          break;
+        }
+      }
+    }
+
+    const questions = [];
+
+    // Only ask for project name if not provided in command line
+    if (!projectNameFromArgs) {
+      questions.push({
         type: "text",
         name: "projectName",
         message: "Project name:",
         validate: (name) => (name ? true : "Project name is required"),
-      },
+      });
+    }
+
+    questions.push(
       {
         type: "select",
         name: "language",
@@ -29,25 +107,26 @@ const {
           { title: "TypeScript", value: "ts" },
           { title: "JavaScript", value: "js" },
         ],
-        initial: 0,
       },
-      // TODO: Uncomment when features are implemented
-      // {
-      //   type: "multiselect",
-      //   name: "features",
-      //   message: "Select features to include:",
-      //   choices: [
-      //     { title: "JWT Authentication", value: "auth" },
-      //     { title: "Swagger Docs", value: "swagger", selected: true },
-      //     { title: "Docker Support", value: "docker" },
-      //     { title: "ESLint + Prettier", value: "lint", selected: true },
-      //   ],
-      //   min: 0,
-      // },
-    ]);
+      {
+        type: "confirm",
+        name: "auth",
+        message: "Include JWT authentication module?",
+        initial: true,
+      },
+    );
 
-    const { projectName, language } = responses;
-    const features = []; // Empty for now, will be responses.features later
+    const responses = await prompts(questions);
+
+    // Use command line project name if provided, otherwise use prompt response
+    const projectName = projectNameFromArgs || responses.projectName;
+    const { language, auth } = responses;
+
+    if (!projectName || projectName.trim() === "") {
+      console.error("❌ Project name is required");
+      process.exit(1);
+    }
+
     const targetDir = path.join(process.cwd(), projectName);
 
     if (fs.existsSync(targetDir)) {
@@ -56,41 +135,140 @@ const {
     }
 
     const pkgManager = detectPackageManager();
-
-    console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
-
-    // Template directory is template/js or template/ts
     const templateDir = path.join(__dirname, "..", "template", language);
 
-    copyTemplateModules(templateDir, targetDir, features);
-
-    // basePackage.json is directly in template/js or template/ts
-    const basePkg = JSON.parse(
-      fs.readFileSync(path.join(templateDir, "basePackage.json")),
+    console.log(
+      `\n📁 Creating project "${projectName}" in ${language.toUpperCase()}...`,
     );
-    let mergedPkg = { ...basePkg };
 
-    // TODO: Uncomment when features are implemented
-    // features.forEach((f) => {
-    //   const fragPath = path.join(templateDir, "modules", f, "package.json");
-    //   if (fs.existsSync(fragPath)) {
-    //     const frag = JSON.parse(fs.readFileSync(fragPath));
-    //     mergedPkg.dependencies = {
-    //       ...mergedPkg.dependencies,
-    //       ...frag.dependencies,
-    //     };
-    //     mergedPkg.devDependencies = {
-    //       ...mergedPkg.devDependencies,
-    //       ...frag.devDependencies,
-    //     };
-    //     mergedPkg.scripts = { ...mergedPkg.scripts, ...frag.scripts };
-    //   }
-    // });
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const basePkgPath = path.join(templateDir, "basePackage.json");
+    if (!fs.existsSync(basePkgPath)) {
+      throw new Error(`basePackage.json not found at ${basePkgPath}`);
+    }
+
+    let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
+    console.log("✓ Loaded base package configuration");
+
+    console.log("\n📁 Copying base template structure...");
+
+    copyDirRecursive(templateDir, targetDir, ["basePackage.json"]);
+
+    const templateModulesDir = path.join(templateDir, "src", "modules");
+    const targetModulesDir = path.join(targetDir, "src", "modules");
+
+    if (fs.existsSync(templateModulesDir)) {
+      if (!fs.existsSync(targetModulesDir)) {
+        fs.mkdirSync(targetModulesDir, { recursive: true });
+      }
+
+      const moduleEntries = fs.readdirSync(templateModulesDir, {
+        withFileTypes: true,
+      });
+
+      for (const entry of moduleEntries) {
+        if (entry.isDirectory()) {
+          const moduleName = entry.name;
+          const moduleSrcPath = path.join(templateModulesDir, moduleName);
+
+          if (moduleName === "auth") {
+            if (!auth) {
+              console.log(`⏭️  Skipping auth module (not selected)`);
+              continue;
+            }
+          } else {
+            const moduleDestPath = path.join(targetModulesDir, moduleName);
+            console.log(`📦 Copying ${moduleName} module...`);
+            copyDirRecursive(moduleSrcPath, moduleDestPath);
+          }
+        }
+      }
+    }
+
+    // Handle JWT authentication module if selected
+    if (auth) {
+      console.log("\n📦 Adding JWT authentication module...");
+
+      // The auth module is in src/modules/auth in the template
+      const authModulePath = path.join(templateDir, "src", "modules", "auth");
+
+      if (!fs.existsSync(authModulePath)) {
+        console.error(`❌ Auth module not found at ${authModulePath}`);
+      } else {
+        // 1. Merge auth module's package.json
+        const authPkgPath = path.join(authModulePath, "package.json");
+
+        if (fs.existsSync(authPkgPath)) {
+          try {
+            const authPkg = JSON.parse(fs.readFileSync(authPkgPath, "utf-8"));
+            console.log("✓ Found auth module package.json");
+
+            mergedPkg = mergePackageJson(mergedPkg, authPkg);
+            console.log("✓ Merged auth module dependencies");
+            console.log(
+              "  Added dependencies:",
+              Object.keys(authPkg.dependencies || {}).join(", "),
+            );
+            if (authPkg.devDependencies) {
+              console.log(
+                "  Added devDependencies:",
+                Object.keys(authPkg.devDependencies).join(", "),
+              );
+            }
+          } catch (error) {
+            console.error(
+              `❌ Failed to parse auth module package.json:`,
+              error.message,
+            );
+          }
+        } else {
+          console.error(
+            "❌ Auth module package.json not found at:",
+            authPkgPath,
+          );
+        }
+
+        const targetAuthPath = path.join(targetModulesDir, "auth");
+        console.log(
+          `Copying auth module to: ${targetAuthPath} (excluding package.json)`,
+        );
+
+        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"]);
+        console.log("✓ Copied auth module files (package.json was excluded)");
+
+        const copiedPkgPath = path.join(targetAuthPath, "package.json");
+        if (fs.existsSync(copiedPkgPath)) {
+          console.warn(
+            "⚠️ package.json was accidentally copied, removing it...",
+          );
+          fs.unlinkSync(copiedPkgPath);
+        }
+      }
+    } else {
+      console.log("\n⏭️  Skipping JWT authentication module");
+
+      const targetAuthPath = path.join(targetDir, "src", "modules", "auth");
+      if (fs.existsSync(targetAuthPath)) {
+        console.log("Cleaning up auth directory (not selected)...");
+        fs.rmSync(targetAuthPath, { recursive: true, force: true });
+      }
+    }
 
     mergedPkg.name = projectName;
-    fs.writeFileSync(
-      path.join(targetDir, "package.json"),
-      JSON.stringify(mergedPkg, null, 2),
+
+    const finalPkgPath = path.join(targetDir, "package.json");
+    fs.writeFileSync(finalPkgPath, JSON.stringify(mergedPkg, null, 2));
+    console.log(`\n📝 Created package.json at ${finalPkgPath}`);
+
+    console.log("\n📦 Final package.json dependencies:");
+    console.log(
+      "  dependencies:",
+      Object.keys(mergedPkg.dependencies || {}).join(", "),
+    );
+    console.log(
+      "  devDependencies:",
+      Object.keys(mergedPkg.devDependencies || {}).join(", "),
     );
 
     console.log(`\n📦 Installing dependencies using ${pkgManager}...`);
@@ -98,10 +276,13 @@ const {
 
     console.log("\n✅ Charcole project created successfully!");
     console.log(
-      `\n🚀 Next steps:\n  cd ${projectName}\n  ${pkgManager === "npm" ? "npm run dev" : `${pkgManager} dev`}`,
+      `\n🚀 Next steps:\n  cd ${projectName}\n  ${
+        pkgManager === "npm" ? "npm run dev" : `${pkgManager} run dev`
+      }`,
     );
   } catch (err) {
     console.error("❌ Failed to create Charcole project:", err.message);
+    console.error(err.stack);
     process.exit(1);
   }
 })();

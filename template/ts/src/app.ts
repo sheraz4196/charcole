@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-
-import { env } from "./config/env.js";
-import { requestLogger } from "./middlewares/requestLogger.js";
+import { userRepo } from "./repositories/user.repo.ts";
+import { env } from "./config/env.ts";
+import { requestLogger } from "./middlewares/requestLogger.ts";
 import {
   errorHandler,
   asyncHandler,
@@ -10,7 +10,7 @@ import {
 } from "./middlewares/errorHandler.js";
 import { sendSuccess } from "./utils/response.js";
 import { logger } from "./utils/logger.js";
-import routes from "./routes.js";
+import routes from "./routes/index.js";
 
 export const app = express();
 
@@ -64,3 +64,4 @@ app.use((req: Request) => {
 app.use(errorHandler);
 
 logger.info("Express app configured successfully");
+app.locals.userRepo = userRepo;
