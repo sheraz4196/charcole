@@ -2,10 +2,10 @@
 
 ## Features
 
-- [ ] Auth module (JWT)
-- [ ] CLI feature flag for auth
-- [ ] JS template support
-- [ ] TS template support
+- [DONE] Auth module (JWT)
+- [DONE] CLI feature flag for auth
+- [DONE] JS template support
+- [DONE] TS template support
 
 ## Non-Goals
 
