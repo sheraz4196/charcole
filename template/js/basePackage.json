@@ -3,26 +3,24 @@
   "version": "2.0.4",
   "description": "Production-grade Node.js Express API",
   "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "lint": "echo 'Add linting here'",
-    "test": "echo 'Add tests here'"
-  },
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "lint": "echo \"Add linting here\"",
+    "test": "echo \"Add tests here\""
+  },
   "dependencies": {
+    "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "zod": "^3.22.4"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
-  }
+  },
+  "license": "ISC"
 }
