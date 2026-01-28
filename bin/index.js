@@ -70,7 +70,7 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
 (async function main() {
   try {
-    console.log("🔥 Welcome to Charcole v2 CLI");
+    console.log("🔥 Welcome to Charcole v2.1 CLI");
 
     // Check if project name is provided as command line argument
     const args = process.argv.slice(2);
