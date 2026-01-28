@@ -5,7 +5,6 @@ const path = require("path");
 /**
  * Detect which package manager the user is using
  * Priority: pnpm > yarn > npm
- * @returns {string} - Package manager name ('pnpm', 'yarn', or 'npm')
  */
 function detectPackageManager() {
   const userAgent = process.env.npm_config_user_agent;
@@ -28,36 +27,20 @@ function detectPackageManager() {
     }
   }
 
-  const installedManagers = ["pnpm", "yarn", "npm"].filter((manager) => {
-    try {
-      execSync(`${manager} --version`, { stdio: "ignore" });
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  return installedManagers[0] || "npm";
+  return "npm";
 }
 
 /**
- * Install dependencies using the detected package manager
- * @param {string} targetDir - Project directory where package.json exists
- * @param {string} pkgManager - Package manager to use ('pnpm', 'yarn', or 'npm')
+ * Install dependencies
  */
 function installDependencies(targetDir, pkgManager) {
-  try {
-    const installCmd =
-      pkgManager === "yarn" ? "yarn install" : `${pkgManager} install`;
+  const installCmd =
+    pkgManager === "yarn" ? "yarn install" : `${pkgManager} install`;
 
-    execSync(installCmd, {
-      cwd: targetDir,
-      stdio: "inherit",
-    });
-  } catch (error) {
-    console.error(`\n❌ Failed to install dependencies with ${pkgManager}`);
-    throw error;
-  }
+  execSync(installCmd, {
+    cwd: targetDir,
+    stdio: "inherit",
+  });
 }
 
 module.exports = {

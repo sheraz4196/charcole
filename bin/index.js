@@ -2,13 +2,34 @@
 
 const path = require("path");
 const fs = require("fs");
-const { execSync } = require("child_process");
 const prompts = require("prompts");
+
 const { copyTemplateModules } = require("./lib/templateHandler");
 const {
   detectPackageManager,
   installDependencies,
 } = require("./lib/pkgManager");
+
+/**
+ * Merge base package.json with a feature package.json
+ */
+function mergePackageJson(base, fragment) {
+  return {
+    ...base,
+    dependencies: {
+      ...base.dependencies,
+      ...fragment.dependencies,
+    },
+    devDependencies: {
+      ...base.devDependencies,
+      ...fragment.devDependencies,
+    },
+    scripts: {
+      ...base.scripts,
+      ...fragment.scripts,
+    },
+  };
+}
 
 (async function main() {
   try {
@@ -29,25 +50,23 @@ const {
           { title: "TypeScript", value: "ts" },
           { title: "JavaScript", value: "js" },
         ],
-        initial: 0,
       },
-      // TODO: Uncomment when features are implemented
-      // {
-      //   type: "multiselect",
-      //   name: "features",
-      //   message: "Select features to include:",
-      //   choices: [
-      //     { title: "JWT Authentication", value: "auth" },
-      //     { title: "Swagger Docs", value: "swagger", selected: true },
-      //     { title: "Docker Support", value: "docker" },
-      //     { title: "ESLint + Prettier", value: "lint", selected: true },
-      //   ],
-      //   min: 0,
-      // },
+      {
+        type: "confirm",
+        name: "auth",
+        message: "Include JWT authentication module?",
+        initial: true,
+      },
     ]);
 
-    const { projectName, language } = responses;
-    const features = []; // Empty for now, will be responses.features later
+    const { projectName, language, auth } = responses;
+
+    // Build features array based on user selection
+    const features = [];
+    if (auth) {
+      features.push("auth");
+    }
+
     const targetDir = path.join(process.cwd(), projectName);
 
     if (fs.existsSync(targetDir)) {
@@ -56,38 +75,37 @@ const {
     }
 
     const pkgManager = detectPackageManager();
+    const templateDir = path.join(__dirname, "..", "template", language);
 
     console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
 
-    // Template directory is template/js or template/ts
-    const templateDir = path.join(__dirname, "..", "template", language);
-
+    // Copy base template + selected modules (auth will be excluded if not selected)
     copyTemplateModules(templateDir, targetDir, features);
 
-    // basePackage.json is directly in template/js or template/ts
-    const basePkg = JSON.parse(
-      fs.readFileSync(path.join(templateDir, "basePackage.json")),
-    );
-    let mergedPkg = { ...basePkg };
+    // Read basePackage.json (INTERNAL - user never sees this)
+    const basePkgPath = path.join(templateDir, "basePackage.json");
+    let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
 
-    // TODO: Uncomment when features are implemented
-    // features.forEach((f) => {
-    //   const fragPath = path.join(templateDir, "modules", f, "package.json");
-    //   if (fs.existsSync(fragPath)) {
-    //     const frag = JSON.parse(fs.readFileSync(fragPath));
-    //     mergedPkg.dependencies = {
-    //       ...mergedPkg.dependencies,
-    //       ...frag.dependencies,
-    //     };
-    //     mergedPkg.devDependencies = {
-    //       ...mergedPkg.devDependencies,
-    //       ...frag.devDependencies,
-    //     };
-    //     mergedPkg.scripts = { ...mergedPkg.scripts, ...frag.scripts };
-    //   }
-    // });
+    // Merge feature package.json files for selected modules
+    features.forEach((feature) => {
+      const featurePkgPath = path.join(
+        templateDir,
+        "modules",
+        feature,
+        "package.json",
+      );
 
+      if (fs.existsSync(featurePkgPath)) {
+        const featurePkg = JSON.parse(fs.readFileSync(featurePkgPath, "utf-8"));
+        mergedPkg = mergePackageJson(mergedPkg, featurePkg);
+        console.log(`✓ Merged ${feature} module dependencies`);
+      }
+    });
+
+    // Override project name
     mergedPkg.name = projectName;
+
+    // Write final package.json (USER SEES ONLY THIS)
     fs.writeFileSync(
       path.join(targetDir, "package.json"),
       JSON.stringify(mergedPkg, null, 2),
@@ -98,7 +116,9 @@ const {
 
     console.log("\n✅ Charcole project created successfully!");
     console.log(
-      `\n🚀 Next steps:\n  cd ${projectName}\n  ${pkgManager === "npm" ? "npm run dev" : `${pkgManager} dev`}`,
+      `\n🚀 Next steps:\n  cd ${projectName}\n  ${
+        pkgManager === "npm" ? "npm run dev" : `${pkgManager} dev`
+      }`,
     );
   } catch (err) {
     console.error("❌ Failed to create Charcole project:", err.message);
