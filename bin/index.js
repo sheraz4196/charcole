@@ -76,22 +76,21 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
  * Copy module files while maintaining structure
  * This preserves the module's internal folder structure
  */
-function copyModuleFiles(srcModulePath, destRoot) {
+function copyModuleFiles(srcModulePath, destRoot, excludeFiles = []) {
   // Read all files and directories in the module
   const entries = fs.readdirSync(srcModulePath, { withFileTypes: true });
 
   for (const entry of entries) {
     const srcPath = path.join(srcModulePath, entry.name);
+    const destPath = path.join(destRoot, entry.name);
 
-    // Skip package.json file - we'll merge it separately
-    if (entry.name === "package.json") {
+    // Skip excluded files
+    if (excludeFiles.includes(entry.name)) {
       continue;
     }
 
-    const destPath = path.join(destRoot, entry.name);
-
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
+      copyDirRecursive(srcPath, destPath, excludeFiles);
     } else {
       // Create directory if it doesn't exist
       const destDir = path.dirname(destPath);
@@ -157,35 +156,42 @@ function copyModuleFiles(srcModulePath, destRoot) {
     let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
     console.log("✓ Loaded base package configuration");
 
-    // Copy base template files (excluding modules and basePackage.json)
-    const baseEntries = fs.readdirSync(templateDir, { withFileTypes: true });
+    // Copy ALL base template files (including src with empty modules directory)
+    // But we'll handle modules separately based on user selection
+    console.log("\n📁 Copying base template structure...");
+    copyDirRecursive(templateDir, targetDir, ["basePackage.json"]);
 
-    for (const entry of baseEntries) {
-      const srcPath = path.join(templateDir, entry.name);
-
-      // Skip modules directory and basePackage.json file
-      if (entry.name === "modules" || entry.name === "basePackage.json") {
-        continue;
-      }
-
-      const destPath = path.join(targetDir, entry.name);
-
-      if (entry.isDirectory()) {
-        copyDirRecursive(srcPath, destPath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
+    // Remove the modules directory from the copied structure since we'll handle it separately
+    const targetModulesDir = path.join(targetDir, "src", "modules");
+    if (fs.existsSync(targetModulesDir)) {
+      // Remove auth directory if user didn't select it
+      const targetAuthDir = path.join(targetModulesDir, "auth");
+      if (!auth && fs.existsSync(targetAuthDir)) {
+        console.log("Removing auth module (not selected)...");
+        fs.rmSync(targetAuthDir, { recursive: true, force: true });
       }
     }
-    console.log("✓ Copied base template files");
 
     // Handle JWT authentication module if selected
     if (auth) {
       console.log("\n📦 Adding JWT authentication module...");
 
-      const authModulePath = path.join(templateDir, "modules", "auth");
+      // The auth module is in src/modules/auth in the template
+      const authModulePath = path.join(templateDir, "src", "modules", "auth");
 
       if (!fs.existsSync(authModulePath)) {
-        console.warn(`⚠️ Auth module not found at ${authModulePath}`);
+        console.error(`❌ Auth module not found at ${authModulePath}`);
+        console.log("Looking for auth module in template...");
+
+        // Debug: list what's in the template directory
+        const srcPath = path.join(templateDir, "src");
+        if (fs.existsSync(srcPath)) {
+          console.log("Contents of src directory:");
+          const srcContents = fs.readdirSync(srcPath, { withFileTypes: true });
+          srcContents.forEach((item) => {
+            console.log(`  ${item.isDirectory() ? "📁" : "📄"} ${item.name}`);
+          });
+        }
       } else {
         // 1. Merge auth module's package.json
         const authPkgPath = path.join(authModulePath, "package.json");
@@ -193,6 +199,16 @@ function copyModuleFiles(srcModulePath, destRoot) {
         if (fs.existsSync(authPkgPath)) {
           try {
             const authPkg = JSON.parse(fs.readFileSync(authPkgPath, "utf-8"));
+            console.log("✓ Found auth module package.json");
+            console.log(
+              "Auth dependencies:",
+              Object.keys(authPkg.dependencies || {}),
+            );
+            console.log(
+              "Auth devDependencies:",
+              Object.keys(authPkg.devDependencies || {}),
+            );
+
             mergedPkg = mergePackageJson(mergedPkg, authPkg);
             console.log("✓ Merged auth module dependencies");
             console.log(
@@ -212,15 +228,33 @@ function copyModuleFiles(srcModulePath, destRoot) {
             );
           }
         } else {
-          console.warn("⚠️ Auth module package.json not found");
+          console.error(
+            "❌ Auth module package.json not found at:",
+            authPkgPath,
+          );
         }
 
-        // 2. Copy auth module files (excluding package.json)
-        copyModuleFiles(authModulePath, targetDir);
-        console.log("✓ Copied auth module files");
+        // 2. Ensure the target modules directory exists
+        const targetModulesPath = path.join(targetDir, "src", "modules");
+        if (!fs.existsSync(targetModulesPath)) {
+          fs.mkdirSync(targetModulesPath, { recursive: true });
+        }
+
+        // 3. Copy auth module files (excluding package.json)
+        const targetAuthPath = path.join(targetModulesPath, "auth");
+        console.log(`Copying auth module to: ${targetAuthPath}`);
+        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"]);
+        console.log("✓ Copied auth module files (excluding package.json)");
       }
     } else {
       console.log("\n⏭️  Skipping JWT authentication module");
+
+      // Ensure no auth directory exists in the target
+      const targetAuthPath = path.join(targetDir, "src", "modules", "auth");
+      if (fs.existsSync(targetAuthPath)) {
+        console.log("Cleaning up auth directory (not selected)...");
+        fs.rmSync(targetAuthPath, { recursive: true, force: true });
+      }
     }
 
     // Override project name
