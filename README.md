@@ -1,35 +1,49 @@
-# Charcole API
+# Charcole API v2.1
 
-> **Charcole is a production-grade Node.js backend starter CLI that scaffolds enterprise-ready Express APIs with first-class TypeScript or JavaScript support, centralized error handling, Zod validation, and structured logging out of the box.**
+> **Charcole v2.1 is a production-grade Node.js backend starter CLI that scaffolds enterprise-ready Express APIs with first-class TypeScript or JavaScript support, centralized error handling, Zod validation, structured logging, optional JWT authentication, and a revolutionary repository pattern for database abstraction.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express-4.18+-blue.svg)](https://expressjs.com/)
 [![Zod](https://img.shields.io/badge/Zod-3.22+-purple.svg)](https://zod.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
 
-## 🎯 What This Is
+## What's New in v2.1
 
-A **production-ready Node.js Express backend** with:
+### Revolutionary Repository Pattern
 
-- ✅ **TypeScript or JavaScript** templates (v2 feature)
-- ✅ **Centralized Error Handling** - Every error flows through one place
-- ✅ **Error Classification** - Operational vs Programmer errors distinguished
-- ✅ **Zod Validation** - Type-safe schema validation with automatic error formatting
-- ✅ **Structured Logging** - Color-coded logs with context and stack traces
-- ✅ **Consistent JSON Responses** - Standardized format across all endpoints
-- ✅ **Production-Safe** - Internal details hidden from clients in production
-- ✅ **Async Error Handling** - Promise rejection leaks prevented with asyncHandler
-- ✅ **Graceful Shutdown** - Proper cleanup on SIGTERM/SIGINT
-- ✅ **Request Logging** - Method, path, status, duration, IP automatically tracked
-- ✅ **Unhandled Exception Catching** - All edge cases caught and logged
+- **Database abstraction layer** - Switch databases without changing business logic
+- **In-memory repository included** - Test APIs instantly without database setup
+- **Clean separation** - Business logic stays independent of database implementation
+- **Future-proof** - Easy migration between MongoDB, PostgreSQL, MySQL, etc.
 
-## 🚀 Quick Start
+### Optional JWT Authentication Module
 
-### Installation
+- **Complete auth system** - Register, login, logout, protected routes
+- **JWT-based authentication** - Stateless, scalable token management
+- **Password hashing** - Secure bcrypt password handling
+- **Ready-to-use** - Production-ready auth APIs out of the box
+- **Modular design** - Include/exclude during project creation
+
+### Bug Fixes & Improvements
+
+- **Fixed TypeScript compilation** - Clean builds with proper type definitions
+- **Enhanced error handling** - Better error messages and debugging
+- **Improved CLI experience** - Smoother project creation flow
+- **Better dependency management** - Cleaner package.json merging
+
+## Quick Start
 
 ```bash
-# Create your charcole app now
-npx create-charcole@latest charcole-demo
+# Create your charcole app now (with or without project name)
+npx create-charcole@latest my-awesome-api
+
+# OR (interactive mode)
+npx create-charcole@latest
+
+# Follow prompts to select:
+# 1. Language: TypeScript or JavaScript
+# 2. JWT Authentication: Yes/No (includes complete auth system)
 
 # Configure environment
 cp .env.example .env
@@ -41,368 +55,159 @@ npm run dev
 npm start
 ```
 
-Server runs on `http://localhost:3000` by default.
+Server runs on http://localhost:3000 by default.
 
-## 📋 Key Features
+## Repository Pattern: A Game Changer
 
-### 🛡️ Enterprise-Grade Error Handling
+### The Problem
 
-**No More `res.status(500).json(...)`**
+Traditional apps mix database logic with business logic. Switching databases means rewriting everything.
 
-Every error in your application flows through a centralized global error handler that:
+### The Solution
 
-1. **Normalizes** all error types (ZodError, TypeError, custom AppError, etc.)
-2. **Classifies** errors as operational (expected) or programmer (bugs)
-3. **Logs** appropriately (WARN for operational, ERROR with stack for programmer)
-4. **Sanitizes** responses (hides details in production, shows context in dev)
+Charcole v2.1 introduces a Repository Pattern that abstracts database operations:
 
 ```javascript
-// ✅ Throw AppError - ALWAYS
-throw new NotFoundError("User", { id: userId });
-throw new ValidationError("Invalid input", errors);
-throw new ConflictError("Email already exists");
+// Traditional approach (tightly coupled)
+// app.ts
+import mongoose from 'mongoose';
 
-// ❌ Never do this
-res.status(404).json({ error: "Not found" });
-```
-
-### 🔐 Type-Safe Validation
-
-```javascript
-import { z } from "zod";
-import { validateRequest } from "./middlewares/validateRequest.js";
-
-const createUserSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    name: z.string().min(1),
-  }),
-});
-
-router.post("/users", validateRequest(createUserSchema), handler);
-```
-
-### 📝 Structured Logging
-
-```javascript
-import { logger } from "./utils/logger.js";
-
-logger.debug("Debug message", { data: true });
-logger.info("Info message", { data: true });
-logger.warn("Warning message", { data: true });
-logger.error("Error message", { data: true });
-```
-
-### 📊 Consistent JSON Responses
-
-All responses follow the same format:
-
-**Success:**
-
-```json
-{
-  "success": true,
-  "message": "User created successfully",
-  "data": { "id": "123", "name": "John" },
-  "timestamp": "2024-01-20T12:00:00.000Z"
+async function getUser(id: string) {
+  return await UserModel.findById(id); //  Direct MongoDB dependency
 }
+
+// Charcole v2.1 approach (abstracted)
+// repositories/user.repo.ts
+const users: User[] = [];
+
+type CreateUserData = {
+  email: string;
+  name: string;
+  passwordHash: string;
+};
+
+export const userRepo = {
+  async findByEmail(email: string): Promise<User | undefined> {
+    return users.find((u) => u.email === email);
+  },
+
+  async create(data: CreateUserData): Promise<User> {
+    const user: User = {
+      id: randomUUID(),
+      email: data.email,
+      name: data.name,
+      passwordHash: data.passwordHash,
+      role: "user",
+      provider: "credentials",
+      isEmailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    users.push(user);
+    return user;
+  },
+};
+
+// controller.js
+async login(req, res) {
+    try {
+      const result = await AuthService.login(req.body, req.app.locals.userRepo);
+
+      res.json(result);
+    } catch (err) {
+      res.status(401).json({ message: err.message });
+    }
+  },
 ```
 
-**Error:**
+### Benefits
 
-```json
-{
-  "success": false,
-  "message": "User not found",
-  "code": "NOT_FOUND",
-  "statusCode": 404,
-  "context": { "id": "999" },
-  "timestamp": "2024-01-20T12:00:00.000Z"
-}
+- Test instantly - In-memory repository works without database setup
+
+- Switch databases easily - Change MongoDB to PostgreSQL by updating one file
+
+- Clean architecture - Business logic stays pure
+
+- Better testing - Mock repositories for unit tests
+
+- Future-proof - Adapt to any database technology
+
+## JWT Authentication Module (Optional)
+
+### What's Included
+
+When you select "Yes" for authentication during project creation:
+
+src/modules/auth/
+│ ├── auth.controller.ts # Register, login, logout, me endpoints
+│ └── auth.middleware.ts # JWT verification, protected routes
+│ └── auth.service.ts # Business logic for authentication
+| └── auth.routes.ts # Auth API routes
+| └── auth.schemas.ts # Auth API Schemas
+| └── auth.constants.ts # Auth API constants
+
+### Available Endpoints
+
+POST /api/auth/register # Create new account
+POST /api/auth/login # Get JWT token
+GET /api/protected/me # Get current user (protected)
+
+## Golder Rules (Updated for v2.1)
+
+1. Wrap async handlers with asyncHandler
+      `router.get("/users/:id", asyncHandler(async (req, res) => { ... }))`
+2. Throw AppError (never use res.status().json())
+      `throw new NotFoundError("User", { id });`
+3. Validate requests with validateRequest
+      `router.post("/users", validateRequest(schema), handler);`
+4. Use repositories for database operations
+
+```typescript
+//  Direct database calls
+const user = await UserModel.findById(id);
+
+//  Repository pattern
+const user = await AuthService.login(req.body, req.app.locals.userRepo);
 ```
 
-**Validation Error:**
+## Why Choose Charcole v2.1?
 
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "code": "VALIDATION_ERROR",
-  "statusCode": 422,
-  "errors": [
-    { "field": "email", "message": "Invalid email", "code": "invalid_email" }
-  ],
-  "timestamp": "2024-01-20T12:00:00.000Z"
-}
-```
+### For Startups
 
-## 🏗️ Error Classes
+- Launch faster - Production-ready API in minutes
+- Test without DB - In-memory repository for rapid prototyping
+- Built-in auth - User management out of the box
+- Clean code - Follows best practices from day one
 
-Use these specialized error classes:
+### For Enterprises
 
-```javascript
-import {
-  AppError, // Base class
-  ValidationError, // 422 - Input validation failed
-  BadRequestError, // 400 - Malformed request
-  AuthenticationError, // 401 - Invalid credentials
-  AuthorizationError, // 403 - Permission denied
-  NotFoundError, // 404 - Resource not found
-  ConflictError, // 409 - Duplicate/conflict
-  InternalServerError, // 500 - Unexpected error
-} from "./middlewares/errorHandler.js";
-```
+- Maintainable - Repository pattern enables easy database migrations
+- Scalable - Modular architecture grows with your needs
+- Reliable - Battle-tested error handling
+- Type-safe - Full TypeScript support reduces bugs
 
-## 📚 Documentation
+### For Developers
 
-| Document                                          | Purpose                           |
-| ------------------------------------------------- | --------------------------------- |
-| [Getting Started](template/README.md)             | Setup & directory structure guide |
-| [Quick Reference](QUICK_REFERENCE.md)             | Quick patterns & golden rules     |
-| [Error Handling Guide](ERROR_HANDLING.md)         | Comprehensive error documentation |
-| [Architecture Diagrams](ARCHITECTURE_DIAGRAMS.md) | Visual system architecture        |
-| [Full Implementation](IMPLEMENTATION_COMPLETE.md) | Complete implementation details   |
+- Learn best practices - Production patterns built-in
 
-## 🎓 4 Golden Rules
+- Easy to extend - Add modules, databases, features
 
-1. **Wrap async handlers** with `asyncHandler`
+- Great DX - Excellent error messages and logging
 
-   ```javascript
-   router.get("/users/:id", asyncHandler(async (req, res) => { ... }))
-   ```
-
-2. **Throw AppError** (never use `res.status().json()`)
-
-   ```javascript
-   throw new NotFoundError("User", { id });
-   ```
-
-3. **Validate requests** with `validateRequest`
-
-   ```javascript
-   router.post("/users", validateRequest(schema), handler);
-   ```
-
-4. **Send success** with `sendSuccess`
-   ```javascript
-   sendSuccess(res, data, 201, "User created");
-   ```
-
-## 📂 Project Structure
-
-```
-src/
-├── config/
-│   ├── env.js              # Environment validation with Zod
-│   └── constants.js        # HTTP status codes & error messages
-├── middlewares/
-│   ├── errorHandler.js     # ⭐ Global error handler + asyncHandler
-│   ├── validateRequest.js  # Request validation middleware
-│   └── requestLogger.js    # Request logging
-├── modules/
-│   └── health/
-│       └── controller.js   # Example handlers
-├── utils/
-│   ├── AppError.js         # ⭐ Error class hierarchy
-│   ├── logger.js           # Structured logging
-│   └── response.js         # Success response helpers
-├── app.js                  # Express app setup
-├── routes.js               # API routes
-└── server.js               # Server entry point
-```
-
-## 🚀 Running
-
-```bash
-# Development (with auto-reload and full logging)
-npm run dev
-
-# Production (optimized, minimal logging)
-npm start
-
-# Test API endpoints
-node test-api.js
-```
-
-## 🔧 Configuration
-
-Environment variables (see `.env.example`):
-
-```env
-NODE_ENV=development        # development, production, test
-PORT=3000                   # Server port
-LOG_LEVEL=info              # debug, info, warn, error
-CORS_ORIGIN=*               # CORS allowed origins
-REQUEST_TIMEOUT=30000       # Request timeout in milliseconds
-```
-
-## 💻 Example: Create User Endpoint
-
-```javascript
-import { asyncHandler, ConflictError } from "./middlewares/errorHandler.js";
-import { validateRequest } from "./middlewares/validateRequest.js";
-import { sendSuccess } from "./utils/response.js";
-import { z } from "zod";
-
-// 1. Define validation schema
-const createUserSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email"),
-    name: z.string().min(1, "Name required").max(100),
-  }),
-});
-
-// 2. Define handler (wrapped with asyncHandler)
-export const createUser = asyncHandler(async (req, res) => {
-  const { email, name } = req.validatedData.body;
-
-  // Check for duplicate
-  const exists = await User.findOne({ email });
-  if (exists) {
-    throw new ConflictError("Email already exists", { email });
-  }
-
-  // Create user (any error is automatically caught)
-  const user = await User.create({ email, name });
-
-  // Send success
-  sendSuccess(res, user, 201, "User created successfully");
-});
-
-// 3. Use in routes
-router.post("/users", validateRequest(createUserSchema), createUser);
-```
-
-**Results:**
-
-- ✅ Valid request → 201 with user data
-- ✅ Invalid email → 422 with field errors
-- ✅ Duplicate email → 409 conflict
-- ✅ Database error → 500 (logged, generic message sent in prod)
-
-## 🌐 API Endpoints
-
-All endpoints follow the same error handling pattern:
-
-```
-GET  /                 # Root - API info
-GET  /api/health      # Health check
-POST /api/items       # Create item (example)
-```
-
-## ✨ What Makes This Special
-
-Unlike typical Express APIs, Charcole:
-
-- ✅ **Distinguishes operational from programmer errors** - Different handling for expected vs unexpected errors
-- ✅ **Never leaks internal details** - Production-safe error responses
-- ✅ **Catches all async errors** - No promise rejections leak
-- ✅ **Logs with full context** - Debugging is easy
-- ✅ **Validates everything** - Zod integration prevents bad data
-- ✅ **Consistent responses** - Predictable format for every endpoint
-- ✅ **Production-ready** - Graceful shutdown, signal handling, etc.
-
-## 🔄 Error Flow
-
-```
-Request arrives
-     ↓
-Handler (wrapped with asyncHandler)
-     ├─ Success → sendSuccess() → Response sent ✓
-     └─ Error thrown ✘
-        ↓
-Global error handler catches it
-     ↓
-Error normalized & classified
-     ↓
-Logged (WARN for operational, ERROR with stack for programmer)
-     ↓
-Consistent JSON response sent
-```
-
-## 📊 Logging Examples
-
-### Operational Error (Expected)
-
-```
-[2024-01-20T12:00:00.000Z] WARN: Operational Error: NOT_FOUND
-{ "code": "NOT_FOUND", "message": "User not found", "statusCode": 404 }
-```
-
-### Programmer Error (Bug)
-
-```
-[2024-01-20T12:00:00.000Z] ERROR: Programmer Error: REFERENCE_ERROR
-{ "code": "REFERENCE_ERROR", "message": "user is not defined" }
-ReferenceError: user is not defined
-    at handler.js:15:3
-    ...
-```
-
-## 🛠️ Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server with auto-reload
-npm run dev
-
-# Check for syntax errors
-npm run lint
-
-# Run tests
-npm test
-```
-
-## 📦 Dependencies
-
-- **Express** - Web framework
-- **Zod** - Schema validation
-- **CORS** - Cross-origin requests
-- **dotenv** - Environment variables
-- **nodemon** - Auto-reload (dev only)
-
-## 🚢 Production Checklist
-
-Before deploying:
-
-- [ ] Set `NODE_ENV=production`
-- [ ] Configure `CORS_ORIGIN` for your domain
-- [ ] Set `LOG_LEVEL=warn` or higher
-- [ ] Add database connection
-- [ ] Implement authentication
-- [ ] Add rate limiting
-- [ ] Set up error monitoring (e.g., Sentry)
-- [ ] Configure reverse proxy (nginx/apache)
-- [ ] Test all error scenarios
-- [ ] Verify no secrets in error responses
+- Future-proof - Designed for long-term maintenance
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
+We welcome contributions! Please:
 
-1. Follow the error handling patterns
-2. Always use `asyncHandler` for async handlers
-3. Throw `AppError` instances for errors
-4. Include context in errors
-5. Add tests for new features
+1. Fork the repository, create new branch and raise a pull request. If it fits with the goals of **charcole** we'll merge it
+2. Follow the repository pattern for database operations
+3. Use TypeScript for new features
+4. Include tests with in-memory repositories
+5. Document new modules thoroughly
+6. Update README.md for significant changes
 
 ## 📄 License
 
 ISC
-
----
-
-**Made for teams that care about code quality and production reliability.** 🚀
-
-Need help? See the [Getting Started Guide](template/README.md) or [Full Documentation](ERROR_HANDLING.md).
-
-## 🆕 What’s New in v2.0
-
-- 🚀 **First-class TypeScript & JavaScript support**
-- 🧠 CLI-driven language selection
-- 🧩 Modular template architecture (future feature expansion)
-- 🧼 Cleaner project generation flow
-- 📦 Improved dependency handling
-- 🏗️ Foundation for built-in auth, Swagger, Docker modules
