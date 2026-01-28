@@ -4,7 +4,6 @@ const path = require("path");
 const fs = require("fs");
 const prompts = require("prompts");
 
-const { copyDir } = require("./lib/templateHandler");
 const {
   detectPackageManager,
   installDependencies,
@@ -14,21 +13,94 @@ const {
  * Merge base package.json with a feature package.json
  */
 function mergePackageJson(base, fragment) {
-  return {
-    ...base,
-    dependencies: {
-      ...base.dependencies,
+  const merged = { ...base };
+
+  // Merge dependencies
+  if (fragment.dependencies) {
+    merged.dependencies = {
+      ...merged.dependencies,
       ...fragment.dependencies,
-    },
-    devDependencies: {
-      ...base.devDependencies,
+    };
+  }
+
+  // Merge devDependencies
+  if (fragment.devDependencies) {
+    merged.devDependencies = {
+      ...merged.devDependencies,
       ...fragment.devDependencies,
-    },
-    scripts: {
-      ...base.scripts,
+    };
+  }
+
+  // Merge scripts
+  if (fragment.scripts) {
+    merged.scripts = {
+      ...merged.scripts,
       ...fragment.scripts,
-    },
-  };
+    };
+  }
+
+  return merged;
+}
+
+/**
+ * Copy directory recursively
+ */
+function copyDirRecursive(src, dest, excludeFiles = []) {
+  if (!fs.existsSync(src)) return;
+
+  // Create destination directory if it doesn't exist
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    // Skip excluded files
+    if (excludeFiles.includes(entry.name)) {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath, excludeFiles);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Copy module files while maintaining structure
+ * This preserves the module's internal folder structure
+ */
+function copyModuleFiles(srcModulePath, destRoot) {
+  // Read all files and directories in the module
+  const entries = fs.readdirSync(srcModulePath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcModulePath, entry.name);
+
+    // Skip package.json file - we'll merge it separately
+    if (entry.name === "package.json") {
+      continue;
+    }
+
+    const destPath = path.join(destRoot, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      // Create directory if it doesn't exist
+      const destDir = path.dirname(destPath);
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
 }
 
 (async function main() {
@@ -61,12 +133,6 @@ function mergePackageJson(base, fragment) {
 
     const { projectName, language, auth } = responses;
 
-    // Build features array based on user selection
-    const features = [];
-    if (auth) {
-      features.push("auth");
-    }
-
     const targetDir = path.join(process.cwd(), projectName);
 
     if (fs.existsSync(targetDir)) {
@@ -80,74 +146,100 @@ function mergePackageJson(base, fragment) {
     console.log(`\n📁 Creating project in ${language.toUpperCase()}...`);
 
     // Create target directory
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
+    fs.mkdirSync(targetDir, { recursive: true });
 
     // Read basePackage.json (INTERNAL - user never sees this)
     const basePkgPath = path.join(templateDir, "basePackage.json");
-    let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
+    if (!fs.existsSync(basePkgPath)) {
+      throw new Error(`basePackage.json not found at ${basePkgPath}`);
+    }
 
-    // Copy base template files (excluding modules and package.json files)
+    let mergedPkg = JSON.parse(fs.readFileSync(basePkgPath, "utf-8"));
+    console.log("✓ Loaded base package configuration");
+
+    // Copy base template files (excluding modules and basePackage.json)
     const baseEntries = fs.readdirSync(templateDir, { withFileTypes: true });
 
     for (const entry of baseEntries) {
       const srcPath = path.join(templateDir, entry.name);
-      const destPath = path.join(targetDir, entry.name);
 
-      // Skip modules directory and package.json files
+      // Skip modules directory and basePackage.json file
       if (entry.name === "modules" || entry.name === "basePackage.json") {
         continue;
       }
 
+      const destPath = path.join(targetDir, entry.name);
+
       if (entry.isDirectory()) {
-        copyDir(srcPath, destPath);
+        copyDirRecursive(srcPath, destPath);
       } else {
         fs.copyFileSync(srcPath, destPath);
       }
     }
+    console.log("✓ Copied base template files");
 
-    // Copy selected feature modules and merge their package.json files
-    const modulesDir = path.join(templateDir, "modules");
+    // Handle JWT authentication module if selected
+    if (auth) {
+      console.log("\n📦 Adding JWT authentication module...");
 
-    if (fs.existsSync(modulesDir) && features.length > 0) {
-      features.forEach((feature) => {
-        const featurePath = path.join(modulesDir, feature);
+      const authModulePath = path.join(templateDir, "modules", "auth");
 
-        if (fs.existsSync(featurePath)) {
-          console.log(`📦 Including ${feature} module...`);
+      if (!fs.existsSync(authModulePath)) {
+        console.warn(`⚠️ Auth module not found at ${authModulePath}`);
+      } else {
+        // 1. Merge auth module's package.json
+        const authPkgPath = path.join(authModulePath, "package.json");
 
-          // Read and merge package.json from module if it exists
-          const featurePkgPath = path.join(featurePath, "package.json");
-          if (fs.existsSync(featurePkgPath)) {
-            try {
-              const featurePkg = JSON.parse(
-                fs.readFileSync(featurePkgPath, "utf-8"),
-              );
-              mergedPkg = mergePackageJson(mergedPkg, featurePkg);
-              console.log(`✓ Merged ${feature} module dependencies`);
-            } catch (error) {
-              console.warn(
-                `⚠️ Could not parse ${feature}/package.json:`,
-                error.message,
+        if (fs.existsSync(authPkgPath)) {
+          try {
+            const authPkg = JSON.parse(fs.readFileSync(authPkgPath, "utf-8"));
+            mergedPkg = mergePackageJson(mergedPkg, authPkg);
+            console.log("✓ Merged auth module dependencies");
+            console.log(
+              "  Added dependencies:",
+              Object.keys(authPkg.dependencies || {}).join(", "),
+            );
+            if (authPkg.devDependencies) {
+              console.log(
+                "  Added devDependencies:",
+                Object.keys(authPkg.devDependencies).join(", "),
               );
             }
+          } catch (error) {
+            console.error(
+              `❌ Failed to parse auth module package.json:`,
+              error.message,
+            );
           }
-
-          // Copy module files but exclude package.json
-          // IMPORTANT: Copy files while maintaining directory structure
-          copyModuleFiles(featurePath, targetDir, ["package.json"]);
+        } else {
+          console.warn("⚠️ Auth module package.json not found");
         }
-      });
+
+        // 2. Copy auth module files (excluding package.json)
+        copyModuleFiles(authModulePath, targetDir);
+        console.log("✓ Copied auth module files");
+      }
+    } else {
+      console.log("\n⏭️  Skipping JWT authentication module");
     }
 
     // Override project name
     mergedPkg.name = projectName;
 
     // Write final package.json (USER SEES ONLY THIS)
-    fs.writeFileSync(
-      path.join(targetDir, "package.json"),
-      JSON.stringify(mergedPkg, null, 2),
+    const finalPkgPath = path.join(targetDir, "package.json");
+    fs.writeFileSync(finalPkgPath, JSON.stringify(mergedPkg, null, 2));
+    console.log(`\n📝 Created package.json at ${finalPkgPath}`);
+
+    // Log the final package.json content for debugging
+    console.log("\n📦 Final package.json dependencies:");
+    console.log(
+      "  dependencies:",
+      Object.keys(mergedPkg.dependencies || {}).join(", "),
+    );
+    console.log(
+      "  devDependencies:",
+      Object.keys(mergedPkg.devDependencies || {}).join(", "),
     );
 
     console.log(`\n📦 Installing dependencies using ${pkgManager}...`);
@@ -161,38 +253,7 @@ function mergePackageJson(base, fragment) {
     );
   } catch (err) {
     console.error("❌ Failed to create Charcole project:", err.message);
+    console.error(err.stack);
     process.exit(1);
   }
 })();
-
-/**
- * Copy module files while maintaining structure
- */
-function copyModuleFiles(src, destRoot, excludeFiles = []) {
-  function copyRecursive(currentSrc, currentDest) {
-    if (!fs.existsSync(currentDest)) {
-      fs.mkdirSync(currentDest, { recursive: true });
-    }
-
-    const entries = fs.readdirSync(currentSrc, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const srcPath = path.join(currentSrc, entry.name);
-      const destPath = path.join(currentDest, entry.name);
-
-      // Skip excluded files
-      if (excludeFiles.includes(entry.name)) {
-        continue;
-      }
-
-      if (entry.isDirectory()) {
-        copyRecursive(srcPath, destPath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
-  }
-
-  // Copy all files from module to destination root
-  copyRecursive(src, destRoot);
-}
