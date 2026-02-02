@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@charcole/swagger": "file:../../../packages/swagger"
+  }
+}
