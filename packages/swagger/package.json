@@ -1,0 +1,24 @@
+{
+  "name": "@charcole/swagger",
+  "version": "1.0.0",
+  "description": "Auto-generated Swagger documentation for Charcole APIs",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "swagger-ui-express": "^4.6.3",
+    "swagger-jsdoc": "^6.2.8",
+    "glob": "^10.3.10"
+  },
+  "keywords": [
+    "charcole",
+    "swagger",
+    "openapi",
+    "documentation",
+    "express"
+  ],
+  "author": "Sheraz Manzoor",
+  "license": "ISC"
+}
