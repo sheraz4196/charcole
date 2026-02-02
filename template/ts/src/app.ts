@@ -13,6 +13,20 @@ import { logger } from "./utils/logger.js";
 import routes from "./routes/index.js";
 
 export const app = express();
+let swaggerSetup: any = null;
+try {
+  const { setupSwagger } = await import("@charcole/swagger");
+  const { default: swaggerConfig } = await import("./config/swagger.config.js");
+
+  swaggerSetup = setupSwagger(app, swaggerConfig);
+  console.log("✅ Swagger documentation enabled at /api-docs");
+} catch (error) {
+  if (env.NODE_ENV === "development") {
+    console.log(
+      "ℹ️  Swagger not installed. To add: npm install @charcole/swagger",
+    );
+  }
+}
 
 app.set("trust proxy", 1);
 
