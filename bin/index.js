@@ -114,13 +114,19 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
         message: "Include JWT authentication module?",
         initial: true,
       },
+      {
+        type: "confirm",
+        name: "swagger",
+        message: "Include auto-generated Swagger documentation?",
+        initial: true,
+      },
     );
 
     const responses = await prompts(questions);
 
     // Use command line project name if provided, otherwise use prompt response
     const projectName = projectNameFromArgs || responses.projectName;
-    const { language, auth } = responses;
+    const { language, auth, swagger } = responses;
 
     if (!projectName || projectName.trim() === "") {
       console.error("❌ Project name is required");
@@ -177,12 +183,63 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
               console.log(`⏭️  Skipping auth module (not selected)`);
               continue;
             }
+          } else if (moduleName === "swagger") {
+            if (!swagger) {
+              console.log(`⏭️  Skipping swagger module (not selected)`);
+              continue;
+            } else {
+              // Do not copy swagger module folder, just merge package.json below
+              console.log(
+                `⏭️  Not copying swagger module folder (merging dependencies only)`,
+              );
+              continue;
+            }
           } else {
             const moduleDestPath = path.join(targetModulesDir, moduleName);
             console.log(`📦 Copying ${moduleName} module...`);
             copyDirRecursive(moduleSrcPath, moduleDestPath);
           }
         }
+      }
+    }
+    // Handle Swagger module if selected
+    if (swagger) {
+      console.log("\n📦 Adding Swagger module dependencies...");
+      const swaggerPkgPath = path.join(
+        templateDir,
+        "src",
+        "modules",
+        "swagger",
+        "package.json",
+      );
+      if (fs.existsSync(swaggerPkgPath)) {
+        try {
+          const swaggerPkg = JSON.parse(
+            fs.readFileSync(swaggerPkgPath, "utf-8"),
+          );
+          mergedPkg = mergePackageJson(mergedPkg, swaggerPkg);
+          console.log("✓ Merged Swagger module dependencies");
+          console.log(
+            "  Added dependencies:",
+            Object.keys(swaggerPkg.dependencies || {}).join(", "),
+          );
+          if (swaggerPkg.devDependencies) {
+            console.log(
+              "  Added devDependencies:",
+              Object.keys(swaggerPkg.devDependencies).join(", "),
+            );
+          }
+        } catch (error) {
+          console.error(
+            `❌ Failed to parse Swagger module package.json:`,
+            error.message,
+          );
+        }
+      } else {
+        console.error(
+          "❌ Swagger module package.json not found at:",
+          swaggerPkgPath,
+        );
       }
     }
 
