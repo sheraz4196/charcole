@@ -4,8 +4,12 @@
   "description": "Auto-generated Swagger documentation for Charcole APIs",
   "main": "src/index.js",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "prepare": "echo 'Ready for npm link'"
   },
   "dependencies": {
     "swagger-ui-express": "^4.6.3",

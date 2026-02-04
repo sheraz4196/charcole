@@ -205,13 +205,27 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
     // Handle Swagger module if selected
     if (swagger) {
       console.log("\n📦 Adding Swagger module dependencies...");
-      const swaggerPkgPath = path.join(
+      const swaggerModuleDir = path.join(
         templateDir,
         "src",
         "modules",
         "swagger",
-        "package.json",
       );
+      const swaggerPkgPath = path.join(swaggerModuleDir, "package.json");
+      const swaggerTgzPath = path.join(
+        swaggerModuleDir,
+        "charcole-swagger-1.0.0.tgz",
+      );
+      // Copy tarball into generated project root
+      if (fs.existsSync(swaggerTgzPath)) {
+        fs.copyFileSync(
+          swaggerTgzPath,
+          path.join(targetDir, "charcole-swagger-1.0.0.tgz"),
+        );
+        console.log("✓ Copied Swagger tarball to project root");
+      } else {
+        console.error("❌ Swagger tarball not found at:", swaggerTgzPath);
+      }
       if (fs.existsSync(swaggerPkgPath)) {
         try {
           const swaggerPkg = JSON.parse(
