@@ -9,8 +9,8 @@ All APIs are automatically documented using JSDoc comments with `@swagger` annot
 ## How It Works
 
 The swagger package automatically scans these directories for `@swagger` comments:
-- `src/modules/**/*.js` - All module files (controllers, routes)
-- `src/routes/**/*.js` - All route files
+- `src/modules/**/*.ts` - All module files (controllers, routes)
+- `src/routes/**/*.ts` - All route files
 
 When you add `@swagger` comments to your code, they automatically appear in the Swagger UI at `/api-docs`.
 
