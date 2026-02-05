@@ -7,26 +7,14 @@ import {
   errorHandler,
   asyncHandler,
   NotFoundError,
-} from "./middlewares/errorHandler.js";
-import { sendSuccess } from "./utils/response.js";
-import { logger } from "./utils/logger.js";
-import routes from "./routes/index.js";
+} from "./middlewares/errorHandler.ts";
+import { sendSuccess } from "./utils/response.ts";
+import { logger } from "./utils/logger.ts";
+import routes from "./routes/index.ts";
+import swaggerOptions from "./config/swagger.config.ts";
+import { setupSwagger } from "@charcole/swagger";
 
 export const app = express();
-let swaggerSetup: any = null;
-try {
-  const { setupSwagger } = await import("@charcole/swagger");
-  const { default: swaggerConfig } = await import("./config/swagger.config.js");
-
-  swaggerSetup = setupSwagger(app, swaggerConfig);
-  console.log("✅ Swagger documentation enabled at /api-docs");
-} catch (error) {
-  if (env.NODE_ENV === "development") {
-    console.log(
-      "ℹ️  Swagger not installed. To add: npm install @charcole/swagger",
-    );
-  }
-}
 
 app.set("trust proxy", 1);
 
@@ -49,6 +37,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(requestLogger);
+
+setupSwagger(app, swaggerOptions);
 
 app.use("/api", routes);
 

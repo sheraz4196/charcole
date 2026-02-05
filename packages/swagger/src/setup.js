@@ -1,5 +1,8 @@
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
+import fs from "fs";
+import path from "path";
+
 export function setupSwagger(app, options = {}) {
   const defaultOptions = {
     title: "Charcole API",
@@ -10,6 +13,26 @@ export function setupSwagger(app, options = {}) {
   };
 
   const config = { ...defaultOptions, ...options };
+
+  // Detect if running TypeScript or JavaScript by checking if src directory has .ts files
+  const srcPath = path.join(process.cwd(), "src");
+  const hasSrcDir = fs.existsSync(srcPath);
+
+  let isTypeScript = false;
+  if (hasSrcDir) {
+    // Check if there are any .ts files in src directory
+    const files = fs.readdirSync(srcPath);
+    isTypeScript = files.some((file) => file.endsWith(".ts"));
+  }
+
+  // Determine file extensions to scan
+  const fileExtension = isTypeScript ? "ts" : "js";
+
+  // Build API paths based on project structure
+  const apiPaths = [
+    `${process.cwd()}/src/modules/**/*.${fileExtension}`,
+    `${process.cwd()}/src/routes/**/*.${fileExtension}`,
+  ];
 
   const openApiSpec = swaggerJSDoc({
     definition: {
@@ -31,10 +54,7 @@ export function setupSwagger(app, options = {}) {
         },
       },
     },
-    apis: [
-      `${process.cwd()}/src/modules/**/*.js`,
-      `${process.cwd()}/src/routes/**/*.js`,
-    ],
+    apis: apiPaths,
   });
 
   app.use(config.path, swaggerUi.serve, swaggerUi.setup(openApiSpec));

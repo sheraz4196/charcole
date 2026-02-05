@@ -1,4 +1,4 @@
-export const swaggerConfig = {
+const swaggerConfig = {
   title: process.env.APP_NAME || "Charcole API",
   version: process.env.APP_VERSION || "1.0.0",
   description: "Production-ready Node.js Express API",
@@ -15,3 +15,5 @@ export const swaggerConfig = {
 };
 
 export type SwaggerConfig = typeof swaggerConfig;
+
+export default swaggerConfig;
