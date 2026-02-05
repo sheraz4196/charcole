@@ -20,6 +20,7 @@ const router = Router();
  *             required:
  *               - email
  *               - password
+ *               - name
  *             properties:
  *               email:
  *                 type: string
@@ -30,6 +31,9 @@ const router = Router();
  *                 format: password
  *                 minLength: 8
  *                 example: SecurePassword123
+ *               name:
+ *                 type: string
+ *                 example: John Doe
  *     responses:
  *       201:
  *         description: User registered successfully
