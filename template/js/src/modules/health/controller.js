@@ -131,7 +131,8 @@ export const createItemSchema = z.object({
  *                   example: Validation failed
  */
 export const createItem = asyncHandler(async (req, res) => {
-  const { name, description } = req.validatedData.body;
+  const parsedData = createItemSchema.parse({ body: req.body });
+  const { name, description } = parsedData.body;
 
   // Simulate some async work
   await new Promise((resolve) => setTimeout(resolve, 10));
