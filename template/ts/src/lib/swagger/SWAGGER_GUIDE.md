@@ -321,9 +321,9 @@ router.get("/", getProducts);
 ## Need Help?
 
 Check out the existing examples in:
-- `src/modules/health/controller.js` - Basic GET/POST examples
-- `src/modules/auth/auth.routes.js` - Authentication examples
-- `src/routes/protected.js` - Protected route example
+- `src/modules/health/controller.ts` - Basic GET/POST examples
+- `src/modules/auth/auth.routes.ts` - Authentication examples
+- `src/routes/protected.ts` - Protected route example
 
 ---
 
