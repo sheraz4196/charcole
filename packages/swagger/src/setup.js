@@ -1,6 +1,6 @@
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
-function setupSwagger(app, options = {}) {
+export function setupSwagger(app, options = {}) {
   const defaultOptions = {
     title: "Charcole API",
     version: "1.0.0",
