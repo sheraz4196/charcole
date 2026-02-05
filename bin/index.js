@@ -42,7 +42,7 @@ function mergePackageJson(base, fragment) {
   return merged;
 }
 
-function copyDirRecursive(src, dest, excludeFiles = []) {
+function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
   if (!fs.existsSync(src)) return;
 
   if (!fs.existsSync(dest)) {
@@ -55,13 +55,25 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
+    // Skip excluded files
     if (excludeFiles.includes(entry.name)) {
       console.log(`Skipping excluded file: ${entry.name}`);
       continue;
     }
 
+    // Skip .tgz files (tarball packages)
+    if (entry.name.endsWith(".tgz")) {
+      console.log(`Skipping tarball: ${entry.name}`);
+      continue;
+    }
+
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath, excludeFiles);
+      // Skip excluded directories
+      if (excludeDirs.includes(entry.name)) {
+        console.log(`Skipping excluded directory: ${entry.name}`);
+        continue;
+      }
+      copyDirRecursive(srcPath, destPath, excludeFiles, excludeDirs);
     } else {
       fs.copyFileSync(srcPath, destPath);
     }
@@ -159,9 +171,15 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
     console.log("\n📁 Copying base template structure...");
 
-    copyDirRecursive(templateDir, targetDir, ["basePackage.json"]);
+    // Exclude basePackage.json and swagger module directory from initial copy
+    // We'll handle modules separately based on user selection
+    const srcModulesDir = path.join(templateDir, "src", "modules");
 
-    const templateModulesDir = path.join(templateDir, "src", "modules");
+    // Copy everything except basePackage.json and the modules directory
+    copyDirRecursive(templateDir, targetDir, ["basePackage.json"], ["modules"]);
+
+    // Now handle modules directory manually
+    const templateModulesDir = srcModulesDir;
     const targetModulesDir = path.join(targetDir, "src", "modules");
 
     if (fs.existsSync(templateModulesDir)) {
@@ -197,7 +215,8 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
           } else {
             const moduleDestPath = path.join(targetModulesDir, moduleName);
             console.log(`📦 Copying ${moduleName} module...`);
-            copyDirRecursive(moduleSrcPath, moduleDestPath);
+            // Exclude package.json files from module folders
+            copyDirRecursive(moduleSrcPath, moduleDestPath, ["package.json"]);
           }
         }
       }
@@ -216,16 +235,18 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
         swaggerModuleDir,
         "charcole-swagger-1.0.0.tgz",
       );
-      // Copy tarball into generated project root
+
+      // Copy tarball temporarily for npm install (will be cleaned up after)
       if (fs.existsSync(swaggerTgzPath)) {
         fs.copyFileSync(
           swaggerTgzPath,
           path.join(targetDir, "charcole-swagger-1.0.0.tgz"),
         );
-        console.log("✓ Copied Swagger tarball to project root");
+        console.log("✓ Copied Swagger tarball temporarily for installation");
       } else {
         console.error("❌ Swagger tarball not found at:", swaggerTgzPath);
       }
+
       if (fs.existsSync(swaggerPkgPath)) {
         try {
           const swaggerPkg = JSON.parse(
@@ -305,7 +326,7 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
           `Copying auth module to: ${targetAuthPath} (excluding package.json)`,
         );
 
-        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"]);
+        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"], []);
         console.log("✓ Copied auth module files (package.json was excluded)");
 
         const copiedPkgPath = path.join(targetAuthPath, "package.json");
@@ -344,6 +365,15 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
     console.log(`\n📦 Installing dependencies using ${pkgManager}...`);
     installDependencies(targetDir, pkgManager);
+
+    // Clean up the swagger tarball after installation
+    if (swagger) {
+      const tgzPath = path.join(targetDir, "charcole-swagger-1.0.0.tgz");
+      if (fs.existsSync(tgzPath)) {
+        fs.unlinkSync(tgzPath);
+        console.log("✓ Cleaned up temporary Swagger tarball");
+      }
+    }
 
     console.log("\n✅ Charcole project created successfully!");
     console.log(
