@@ -347,6 +347,61 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
       }
     }
 
+    // Remove Swagger imports and setup from app file if not selected
+    if (!swagger) {
+      console.log("\n🧹 Removing Swagger references from app file...");
+      const appFileName = language === "ts" ? "app.ts" : "app.js";
+      const appFilePath = path.join(targetDir, "src", appFileName);
+
+      if (fs.existsSync(appFilePath)) {
+        let appContent = fs.readFileSync(appFilePath, "utf-8");
+
+        // Remove swagger-related imports
+        const swaggerConfigImport =
+          language === "ts"
+            ? 'import swaggerOptions from "./config/swagger.config";'
+            : 'import swaggerOptions from "./config/swagger.config.js";';
+        const setupSwaggerImport =
+          'import { setupSwagger } from "@charcole/swagger";';
+
+        appContent = appContent
+          .split("\n")
+          .filter((line) => {
+            const trimmedLine = line.trim();
+            return (
+              !trimmedLine.includes(swaggerConfigImport.trim()) &&
+              !trimmedLine.includes(setupSwaggerImport.trim()) &&
+              !trimmedLine.includes("setupSwagger(app, swaggerOptions);")
+            );
+          })
+          .join("\n");
+
+        fs.writeFileSync(appFilePath, appContent, "utf-8");
+        console.log(`✓ Removed Swagger references from ${appFileName}`);
+      }
+
+      // Remove swagger config file
+      const swaggerConfigFile =
+        language === "ts" ? "swagger.config.ts" : "swagger.config.js";
+      const swaggerConfigPath = path.join(
+        targetDir,
+        "src",
+        "config",
+        swaggerConfigFile,
+      );
+      if (fs.existsSync(swaggerConfigPath)) {
+        fs.unlinkSync(swaggerConfigPath);
+        console.log(`✓ Removed ${swaggerConfigFile}`);
+      }
+
+      // Remove lib/swagger directory
+      const swaggerLibPath = path.join(targetDir, "src", "lib", "swagger");
+      if (fs.existsSync(swaggerLibPath)) {
+        fs.rmSync(swaggerLibPath, { recursive: true, force: true });
+        console.log("✓ Removed lib/swagger directory");
+      }
+    }
+
     mergedPkg.name = projectName;
 
     const finalPkgPath = path.join(targetDir, "package.json");
