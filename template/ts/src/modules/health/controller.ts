@@ -22,8 +22,39 @@ const createItemSchema = z.object({
 type CreateItemBody = z.infer<typeof createItemSchema>["body"];
 
 /**
- * Health check endpoint
- * Always returns healthy status (ping endpoint)
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: Returns the health status of the API
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Service is healthy
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: healthy
+ *                     uptime:
+ *                       type: number
+ *                       example: 123.45
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
  */
 export const getHealth = [
   validateRequest(healthCheckSchema),
@@ -39,8 +70,62 @@ export const getHealth = [
 ];
 
 /**
- * Example POST endpoint with validation
- * Demonstrates proper error handling with Zod validation
+ * @swagger
+ * /api/items:
+ *   post:
+ *     summary: Create a new item
+ *     description: Example endpoint demonstrating validation with Zod
+ *     tags:
+ *       - Items
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *                 example: My Item
+ *               description:
+ *                 type: string
+ *                 example: This is an example item
+ *     responses:
+ *       201:
+ *         description: Item created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Item created successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: abc123def
+ *                     name:
+ *                       type: string
+ *                       example: My Item
+ *                     description:
+ *                       type: string
+ *                       nullable: true
+ *                       example: This is an example item
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Validation error
  */
 export const createItem = [
   validateRequest(createItemSchema),

@@ -20,6 +20,16 @@ export function setupSwagger(app, options = {}) {
         description: config.description,
       },
       servers: config.servers,
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+            description: "Enter your JWT token in the format: your-token-here",
+          },
+        },
+      },
     },
     apis: [
       `${process.cwd()}/src/modules/**/*.js`,
