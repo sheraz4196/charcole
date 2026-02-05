@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Auto-generated Swagger documentation for Charcole APIs",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
   },
   "scripts": {
     "test": "echo \"No tests yet\" && exit 0",
