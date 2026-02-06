@@ -16,27 +16,12 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 format: password
- *                 minLength: 8
- *                 example: SecurePassword123
+ *             $ref: '#/components/schemas/registerSchema'
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         $ref: '#/components/responses/Success'
  *       400:
- *         description: Validation error or user already exists
- *       500:
- *         description: Internal server error
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/register", AuthController.register);
 
@@ -53,28 +38,14 @@ router.post("/register", AuthController.register);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 format: password
- *                 example: SecurePassword123
+ *             $ref: '#/components/schemas/loginSchema'
  *     responses:
  *       200:
- *         description: Login successful
+ *         $ref: '#/components/responses/Success'
  *       401:
- *         description: Invalid credentials
+ *         $ref: '#/components/responses/Unauthorized'
  *       400:
- *         description: Validation error
- *       500:
- *         description: Internal server error
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/login", AuthController.login);
 

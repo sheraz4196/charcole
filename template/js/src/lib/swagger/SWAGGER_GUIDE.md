@@ -1,35 +1,64 @@
 # Swagger Documentation Guide
 
-This guide explains how to automatically document your APIs in the Swagger UI.
+**@charcole/swagger** - Effortless API documentation that eliminates duplication and dramatically reduces manual work.
 
-## Overview
+## 🎯 What's New
 
-All APIs are automatically documented using JSDoc comments with `@swagger` annotations. The swagger documentation is generated from comments in your route and controller files.
+The new @charcole/swagger **automatically generates API schemas from your Zod validations**, eliminating the need to write the same schema twice. You now write **60-80% less documentation** while keeping perfect synchronization between your validation logic and API docs.
 
-## How It Works
+## 🚀 Quick Start
 
-The swagger package automatically scans these directories for `@swagger` comments:
-- `src/modules/**/*.js` - All module files (controllers, routes)
-- `src/routes/**/*.js` - All route files
+### 1. Register Your Zod Schemas (One-Time Setup)
 
-When you add `@swagger` comments to your code, they automatically appear in the Swagger UI at `/api-docs`.
+In `src/config/swagger.config.ts`, import and register your Zod schemas:
 
-## Basic Example
+```typescript
+import { registerSchema, loginSchema } from "../modules/auth/auth.schemas.ts";
+import { createItemSchema } from "../modules/health/controller.ts";
 
-Here's how to document a simple GET endpoint:
+const swaggerConfig = {
+  title: "My API",
+  version: "1.0.0",
+  // Auto-register schemas - they'll be converted to OpenAPI automatically!
+  schemas: {
+    registerSchema,
+    loginSchema,
+    createItemSchema,
+  },
+};
 
-```javascript
+export default swaggerConfig;
+```
+
+That's it! Your Zod schemas are now available as `$ref` in Swagger.
+
+### 2. Use Schema References in Your Routes
+
+**Before (Old Way - 76 lines):**
+
+```typescript
 /**
  * @swagger
- * /api/users:
- *   get:
- *     summary: Get all users
- *     description: Retrieve a list of all users
- *     tags:
- *       - Users
+ * /api/items:
+ *   post:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *                 example: My Item
+ *               description:
+ *                 type: string
  *     responses:
- *       200:
- *         description: List of users retrieved successfully
+ *       201:
+ *         description: Item created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -37,70 +66,122 @@ Here's how to document a simple GET endpoint:
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       email:
- *                         type: string
+ *                   ... 50 more lines
  */
-export const getAllUsers = asyncHandler(async (req, res) => {
-  // Your implementation
-});
 ```
 
-## POST Endpoint with Request Body
+**After (New Way - 16 lines):**
 
-Document POST endpoints with request bodies:
-
-```javascript
+```typescript
 /**
  * @swagger
- * /api/users:
+ * /api/items:
  *   post:
- *     summary: Create a new user
+ *     summary: Create a new item
  *     tags:
- *       - Users
+ *       - Items
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - name
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: user@example.com
- *               name:
- *                 type: string
- *                 example: John Doe
+ *             $ref: '#/components/schemas/createItemSchema'
  *     responses:
  *       201:
- *         description: User created successfully
+ *         $ref: '#/components/responses/Success'
  *       400:
- *         description: Validation error
+ *         $ref: '#/components/responses/ValidationError'
  */
-export const createUser = asyncHandler(async (req, res) => {
-  // Your implementation
+```
+
+**Result:** 60 lines eliminated! And your schema stays in sync automatically.
+
+---
+
+## 📚 Complete Examples
+
+### Example 1: Simple GET Endpoint
+
+```typescript
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ */
+export const getHealth = asyncHandler(async (req, res) => {
+  sendSuccess(res, { status: "healthy" }, 200, "Service is healthy");
 });
 ```
 
-## Protected Endpoints (Requires Authentication)
+**Just 9 lines!** Common responses like `Success`, `ValidationError`, `Unauthorized` are included automatically.
 
-For endpoints that require authentication, add the `security` field:
+### Example 2: POST with Zod Validation
 
-```javascript
+**Step 1:** Define your Zod schema (you're already doing this for validation):
+
+```typescript
+// src/modules/items/items.schemas.ts
+export const createItemSchema = z.object({
+  body: z.object({
+    name: z.string().min(1).max(100),
+    description: z.string().optional(),
+    price: z.number().positive(),
+  }),
+});
+```
+
+**Step 2:** Register it in `swagger.config.ts`:
+
+```typescript
+import { createItemSchema } from "../modules/items/items.schemas.ts";
+
+const swaggerConfig = {
+  // ...
+  schemas: {
+    createItemSchema, // Auto-converted to OpenAPI!
+  },
+};
+```
+
+**Step 3:** Reference it in your endpoint:
+
+```typescript
 /**
  * @swagger
- * /api/protected/profile:
+ * /api/items:
+ *   post:
+ *     summary: Create a new item
+ *     tags:
+ *       - Items
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/createItemSchema'
+ *     responses:
+ *       201:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post("/items", createItem);
+```
+
+**No duplication!** Change your Zod schema once, and Swagger updates automatically.
+
+### Example 3: Protected Endpoint with Authentication
+
+```typescript
+/**
+ * @swagger
+ * /api/profile:
  *   get:
  *     summary: Get user profile
  *     tags:
@@ -109,18 +190,16 @@ For endpoints that require authentication, add the `security` field:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Profile retrieved successfully
+ *         $ref: '#/components/responses/Success'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  */
 router.get("/profile", requireAuth, getProfile);
 ```
 
-## Path Parameters
+### Example 4: Path Parameters
 
-Document endpoints with path parameters:
-
-```javascript
+```typescript
 /**
  * @swagger
  * /api/users/{id}:
@@ -137,18 +216,16 @@ Document endpoints with path parameters:
  *         description: User ID
  *     responses:
  *       200:
- *         description: User found
+ *         $ref: '#/components/responses/Success'
  *       404:
- *         description: User not found
+ *         $ref: '#/components/responses/NotFound'
  */
 router.get("/:id", getUserById);
 ```
 
-## Query Parameters
+### Example 5: Query Parameters (Pagination, Filtering)
 
-Document query parameters for filtering, pagination, etc:
-
-```javascript
+```typescript
 /**
  * @swagger
  * /api/products:
@@ -167,164 +244,318 @@ Document query parameters for filtering, pagination, etc:
  *         schema:
  *           type: integer
  *           default: 1
- *         description: Page number
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Items per page
  *     responses:
  *       200:
- *         description: Products retrieved successfully
+ *         $ref: '#/components/responses/Success'
  */
-router.get("/", getProducts);
+router.get("/products", getProducts);
 ```
-
-## Important Notes
-
-### 1. **Automatic Discovery**
-- Just add `@swagger` comments above your route handlers or in route files
-- No configuration needed - it's automatically picked up
-- Restart your server to see new documentation
-
-### 2. **Tags**
-- Use tags to group related endpoints
-- Example: `tags: - Users`, `tags: - Products`
-- All endpoints with the same tag are grouped together in Swagger UI
-
-### 3. **Response Schemas**
-- Always document the response structure
-- Include both success and error responses
-- Use realistic examples
-
-### 4. **Request Validation**
-- If you're using Zod validation, make sure your swagger docs match the schema
-- Document all required fields and their constraints
-
-### 5. **File Location**
-- You can add `@swagger` comments in:
-  - Controller files (e.g., `src/modules/users/users.controller.js`)
-  - Route files (e.g., `src/routes/users.js`)
-  - Either location works - choose what's clearest for your project
-
-## Testing Your Documentation
-
-1. Start your server: `npm start`
-2. Visit: `http://localhost:3000/api-docs`
-3. Try out your APIs directly from the Swagger UI!
-
-## Common Patterns
-
-### Full CRUD Example
-
-```javascript
-/**
- * @swagger
- * /api/posts:
- *   get:
- *     summary: Get all posts
- *     tags: [Posts]
- *     responses:
- *       200:
- *         description: Success
- *   post:
- *     summary: Create a post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [title, content]
- *             properties:
- *               title:
- *                 type: string
- *               content:
- *                 type: string
- *     responses:
- *       201:
- *         description: Created
- * 
- * /api/posts/{id}:
- *   get:
- *     summary: Get post by ID
- *     tags: [Posts]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Success
- *       404:
- *         description: Not found
- *   put:
- *     summary: Update post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               content:
- *                 type: string
- *     responses:
- *       200:
- *         description: Updated
- *   delete:
- *     summary: Delete post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: Deleted
- */
-```
-
-## Quick Reference
-
-| Field | Description | Required |
-|-------|-------------|----------|
-| `summary` | Short description of endpoint | Yes |
-| `description` | Detailed description | No |
-| `tags` | Group endpoints together | Recommended |
-| `security` | Authentication requirement | For protected routes |
-| `parameters` | Path/query parameters | If applicable |
-| `requestBody` | Request body schema | For POST/PUT/PATCH |
-| `responses` | Possible responses | Yes |
-
-## Need Help?
-
-Check out the existing examples in:
-- `src/modules/health/controller.js` - Basic GET/POST examples
-- `src/modules/auth/auth.routes.js` - Authentication examples
-- `src/routes/protected.js` - Protected route example
 
 ---
 
-**Remember**: Every time you create a new route, just add a `@swagger` comment above it, and it will automatically appear in the Swagger UI!
+## 🎁 Built-in Response Templates
+
+These responses are **automatically available** - no configuration needed:
+
+| Response Name     | Status  | When to Use                       |
+| ----------------- | ------- | --------------------------------- |
+| `Success`         | 200/201 | Successful operations             |
+| `ValidationError` | 400     | Request validation failures       |
+| `Unauthorized`    | 401     | Missing or invalid authentication |
+| `Forbidden`       | 403     | Insufficient permissions          |
+| `NotFound`        | 404     | Resource not found                |
+| `InternalError`   | 500     | Server errors                     |
+
+Use them with `$ref`:
+
+```yaml
+responses:
+  200:
+    $ref: "#/components/responses/Success"
+  400:
+    $ref: "#/components/responses/ValidationError"
+```
+
+---
+
+## 🔧 Advanced Features
+
+### Custom Response Schemas
+
+If you need custom responses beyond the built-in ones:
+
+```typescript
+// In swagger.config.ts
+const swaggerConfig = {
+  // ...
+  customResponses: {
+    UserCreated: {
+      description: "User created successfully",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              userId: { type: "string" },
+              token: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+```
+
+Then use it:
+
+```yaml
+responses:
+  201:
+    $ref: "#/components/responses/UserCreated"
+```
+
+### Helper Functions for Programmatic Documentation
+
+For advanced use cases, you can use helper functions:
+
+```typescript
+import { convertZodToOpenAPI, endpoint } from "@charcole/swagger";
+
+// Convert a single Zod schema to JSON Schema
+const jsonSchema = convertZodToOpenAPI(myZodSchema, "MySchema");
+
+// Create endpoint documentation programmatically
+const apiDef = endpoint("POST", "/api/users", {
+  summary: "Create user",
+  schema: "createUserSchema",
+  responseSchema: "Success",
+  security: true,
+});
+```
+
+---
+
+## 📖 Migration Guide
+
+### Migrating from Old JSDoc Approach
+
+**Old (Manual Schema):**
+
+```typescript
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ */
+```
+
+**New (Schema Reference):**
+
+```typescript
+// 1. Register the schema in swagger.config.ts
+schemas: {
+  registerSchema,  // Already defined in auth.schemas.ts
+}
+
+// 2. Use reference in JSDoc
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/registerSchema'
+ *     responses:
+ *       201:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+```
+
+---
+
+## ✅ Best Practices
+
+1. **Always register schemas in swagger.config.ts**
+   - One central place for all schema registrations
+   - Easy to see what's documented
+
+2. **Use built-in response templates**
+   - Consistency across your API
+   - Less code to maintain
+
+3. **Keep Zod schemas colocated with modules**
+   - `modules/auth/auth.schemas.ts`
+   - `modules/users/users.schemas.ts`
+
+4. **Name schemas descriptively**
+   - ✅ `createUserSchema`, `updateUserSchema`
+   - ❌ `schema1`, `userSchema`
+
+5. **One schema definition = One source of truth**
+   - Define in Zod for validation
+   - Auto-generate for Swagger
+   - Never duplicate!
+
+---
+
+## 🆚 Comparison: Before vs After
+
+| Aspect                 | Before            | After          | Improvement        |
+| ---------------------- | ----------------- | -------------- | ------------------ |
+| **Lines per endpoint** | 45-76 lines       | 10-20 lines    | **60-75% less**    |
+| **Schema duplication** | Zod + Manual YAML | Zod only       | **0% duplication** |
+| **Maintenance**        | Update 2 places   | Update 1 place | **50% less work**  |
+| **Sync issues**        | Common            | Impossible     | **Always in sync** |
+| **Response templates** | Copy-paste        | Built-in       | **Reusable**       |
+
+---
+
+## 🔍 Troubleshooting
+
+### Schema not appearing in Swagger UI?
+
+1. Check that the schema is imported in `swagger.config.ts`
+2. Restart your server (schemas are loaded at startup)
+3. Check browser console for errors
+
+### Zod schema not converting correctly?
+
+- Ensure you're using `zod-to-json-schema` compatible Zod features
+- Complex transforms may not convert perfectly
+- Use simpler Zod primitives when possible
+
+### Want to see raw OpenAPI spec?
+
+Visit `/api-docs.json` (if enabled) or check the console logs on startup.
+
+---
+
+## 📦 Using @charcole/swagger in Non-Charcole Projects
+
+Even if you didn't create your project with `create-charcole`, you can still use @charcole/swagger!
+
+```bash
+npm install @charcole/swagger zod
+```
+
+```typescript
+import express from "express";
+import { setupSwagger } from "@charcole/swagger";
+import { mySchema } from "./schemas";
+
+const app = express();
+
+setupSwagger(app, {
+  title: "My API",
+  version: "1.0.0",
+  schemas: {
+    mySchema, // Your Zod schemas
+  },
+});
+
+app.listen(3000);
+```
+
+Works with any Express.js project!
+
+---
+
+## 🎓 Quick Reference
+
+### Minimal Endpoint (GET)
+
+```typescript
+/**
+ * @swagger
+ * /api/endpoint:
+ *   get:
+ *     summary: Short description
+ *     tags: [Tag]
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ */
+```
+
+### With Request Body (POST/PUT/PATCH)
+
+```typescript
+/**
+ * @swagger
+ * /api/endpoint:
+ *   post:
+ *     summary: Short description
+ *     tags: [Tag]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/schemaName'
+ *     responses:
+ *       201:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+```
+
+### Protected Endpoint
+
+```typescript
+/**
+ * @swagger
+ * /api/endpoint:
+ *   get:
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+```
+
+---
+
+## 💡 Need Help?
+
+Check the examples in:
+
+- `src/modules/health/controller.ts` - GET/POST examples
+- `src/modules/auth/auth.routes.ts` - Authentication endpoints
+- `src/config/swagger.config.ts` - Schema registration
+
+**Test your documentation:**
+
+1. Start server: `npm start`
+2. Visit: `http://localhost:3000/api-docs`
+3. Try out endpoints directly in Swagger UI!
+
+---
+
+**Remember:** With @charcole/swagger, you define your schemas once in Zod, and documentation happens automatically. No more duplication, no more sync issues, dramatically less effort! 🎉

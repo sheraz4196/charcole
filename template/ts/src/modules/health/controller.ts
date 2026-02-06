@@ -13,30 +13,7 @@ import { asyncHandler } from "../../middlewares/errorHandler.ts";
  *       - Health
  *     responses:
  *       200:
- *         description: Service is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Service is healthy
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: string
- *                       example: healthy
- *                     uptime:
- *                       type: number
- *                       example: 123.45
- *                     timestamp:
- *                       type: string
- *                       format: date-time
+ *         $ref: '#/components/responses/Success'
  */
 export const getHealth = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(
@@ -75,61 +52,12 @@ export const createItemSchema = z.object({
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 minLength: 1
- *                 maxLength: 100
- *                 example: My Item
- *               description:
- *                 type: string
- *                 example: This is an example item
+ *             $ref: '#/components/schemas/createItemSchema'
  *     responses:
  *       201:
- *         description: Item created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Item created successfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       example: abc123def
- *                     name:
- *                       type: string
- *                       example: My Item
- *                     description:
- *                       type: string
- *                       nullable: true
- *                       example: This is an example item
- *                     createdAt:
- *                       type: string
- *                       format: date-time
+ *         $ref: '#/components/responses/Success'
  *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Validation failed
+ *         $ref: '#/components/responses/ValidationError'
  */
 export const createItem = asyncHandler(async (req: Request, res: Response) => {
   const parsed = createItemSchema.parse({ body: req.body });

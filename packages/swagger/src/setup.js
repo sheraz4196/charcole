@@ -2,6 +2,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
 import fs from "fs";
 import path from "path";
+import { registerSchemas, getCommonResponses } from "./helpers.js";
 
 export function setupSwagger(app, options = {}) {
   const defaultOptions = {
@@ -10,6 +11,12 @@ export function setupSwagger(app, options = {}) {
     description: "Auto-generated API documentation",
     path: "/api-docs",
     servers: [{ url: "http://localhost:3000", description: "Local server" }],
+    // NEW: Auto-register Zod schemas
+    schemas: {},
+    // NEW: Include common response templates
+    includeCommonResponses: true,
+    // NEW: Custom response schemas
+    customResponses: {},
   };
 
   const config = { ...defaultOptions, ...options };
@@ -34,6 +41,41 @@ export function setupSwagger(app, options = {}) {
     `${process.cwd()}/src/routes/**/*.${fileExtension}`,
   ];
 
+  // NEW: Build components with auto-registered schemas
+  const components = {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "Enter your JWT token in the format: your-token-here",
+      },
+    },
+    schemas: {},
+    responses: {},
+  };
+
+  // NEW: Register Zod schemas if provided
+  if (config.schemas && Object.keys(config.schemas).length > 0) {
+    try {
+      const registeredSchemas = registerSchemas(config.schemas);
+      components.schemas = { ...registeredSchemas };
+      console.log(
+        `✅ Auto-registered ${Object.keys(registeredSchemas).length} Zod schemas`,
+      );
+    } catch (error) {
+      console.warn("⚠️  Failed to register some Zod schemas:", error.message);
+    }
+  }
+
+  // NEW: Add common response templates
+  if (config.includeCommonResponses) {
+    components.responses = {
+      ...getCommonResponses(),
+      ...config.customResponses,
+    };
+  }
+
   const openApiSpec = swaggerJSDoc({
     definition: {
       openapi: "3.0.0",
@@ -43,16 +85,7 @@ export function setupSwagger(app, options = {}) {
         description: config.description,
       },
       servers: config.servers,
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
-            description: "Enter your JWT token in the format: your-token-here",
-          },
-        },
-      },
+      components,
     },
     apis: apiPaths,
   });
