@@ -22,6 +22,26 @@ export function convertZodToOpenAPI(zodSchema, name) {
       delete jsonSchema.$schema;
     }
 
+    // Handle case where zodToJsonSchema returns a $ref with definitions
+    // This happens with complex nested schemas
+    if (jsonSchema.$ref && jsonSchema.definitions) {
+      // Extract the actual schema from definitions
+      const refName = jsonSchema.$ref.split("/").pop();
+      if (jsonSchema.definitions[refName]) {
+        const actualSchema = jsonSchema.definitions[refName];
+        // Remove $schema from the extracted definition too
+        if (actualSchema.$schema) {
+          delete actualSchema.$schema;
+        }
+        return actualSchema;
+      }
+    }
+
+    // Remove definitions if present (OpenAPI handles these at component level)
+    if (jsonSchema.definitions) {
+      delete jsonSchema.definitions;
+    }
+
     return jsonSchema;
   } catch (error) {
     console.warn(`Failed to convert Zod schema "${name}":`, error.message);
