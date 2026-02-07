@@ -8,11 +8,12 @@ Welcome! This guide will help you set up and start using the Charcole API framew
 2. [Project Structure](#project-structure)
 3. [Configuration](#configuration)
 4. [Creating Your First Endpoint](#creating-your-first-endpoint)
-5. [Error Handling](#error-handling)
-6. [Validation](#validation)
-7. [Logging](#logging)
-8. [Running Your API](#running-your-api)
-9. [Troubleshooting](#troubleshooting)
+5. [API Documentation with Swagger](#api-documentation-with-swagger)
+6. [Error Handling](#error-handling)
+7. [Validation](#validation)
+8. [Logging](#logging)
+9. [Running Your API](#running-your-api)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -393,6 +394,128 @@ router.get("/users/:id", async (req, res) => {
   "timestamp": "2024-01-20T12:00:00.000Z"
 }
 ```
+
+---
+
+## 📖 API Documentation with Swagger
+
+Your API comes with **automatic interactive documentation** powered by Swagger UI!
+
+### Accessing the Documentation
+
+1. Start your server: `npm run dev`
+2. Visit: **http://localhost:3000/api-docs**
+
+You'll see all your APIs automatically documented and can test them directly from the browser!
+
+### How It Works
+
+All built-in APIs are already documented. When you create new endpoints, simply add JSDoc comments with `@swagger` annotations:
+
+```typescript
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get all users
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+  // Your code here
+});
+```
+
+That's it! Your new endpoint will automatically appear in Swagger UI.
+
+### Quick Example: Documenting a POST Endpoint
+
+```typescript
+/**
+ * @swagger
+ * /api/posts:
+ *   post:
+ *     summary: Create a new post
+ *     tags:
+ *       - Posts
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: My First Post
+ *               content:
+ *                 type: string
+ *                 example: This is the post content
+ *     responses:
+ *       201:
+ *         description: Post created successfully
+ *       400:
+ *         description: Validation error
+ */
+export const createPost = asyncHandler(async (req: Request, res: Response) => {
+  // Your implementation
+});
+```
+
+### Protected Endpoints (with Authentication)
+
+For endpoints that require authentication, add the `security` field:
+
+```typescript
+/**
+ * @swagger
+ * /api/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/profile", requireAuth, getProfile);
+```
+
+### 📘 Complete Guide
+
+For comprehensive examples including:
+
+- Path and query parameters
+- File uploads
+- Complex schemas
+- Error responses
+- CRUD operations
+
+See the **[Complete Swagger Documentation Guide](src/lib/swagger/SWAGGER_GUIDE.md)**
+
+### Testing APIs in Swagger UI
+
+1. Open http://localhost:3000/api-docs
+2. Click on any endpoint to expand it
+3. Click "Try it out"
+4. Fill in the parameters
+5. Click "Execute"
+6. See the response!
+
+For protected endpoints:
+
+1. Click the "Authorize" button at the top
+2. Enter your JWT token
+3. Now you can test protected endpoints
 
 ---
 

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@charcoles/swagger": "file:./charcole-swagger-1.0.0.tgz"
+  }
+}

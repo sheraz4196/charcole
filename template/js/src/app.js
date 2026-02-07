@@ -12,7 +12,8 @@ import {
 import { sendSuccess } from "./utils/response.js";
 import { logger } from "./utils/logger.js";
 import routes from "./routes/index.js";
-
+import swaggerOptions from "./config/swagger.config.js";
+import { setupSwagger } from "@charcoles/swagger";
 export const app = express();
 
 // Trust proxy
@@ -41,6 +42,8 @@ app.use((req, res, next) => {
 
 // Request logging
 app.use(requestLogger);
+
+setupSwagger(app, swaggerOptions);
 
 // API Routes
 app.use("/api", routes);

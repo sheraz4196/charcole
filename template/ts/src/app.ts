@@ -7,10 +7,12 @@ import {
   errorHandler,
   asyncHandler,
   NotFoundError,
-} from "./middlewares/errorHandler.js";
-import { sendSuccess } from "./utils/response.js";
-import { logger } from "./utils/logger.js";
-import routes from "./routes/index.js";
+} from "./middlewares/errorHandler.ts";
+import { sendSuccess } from "./utils/response.ts";
+import { logger } from "./utils/logger.ts";
+import routes from "./routes/index.ts";
+import swaggerOptions from "./config/swagger.config.ts";
+import { setupSwagger } from "@charcoles/swagger";
 
 export const app = express();
 
@@ -35,6 +37,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(requestLogger);
+
+setupSwagger(app, swaggerOptions);
 
 app.use("/api", routes);
 

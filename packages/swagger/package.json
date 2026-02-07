@@ -1,0 +1,44 @@
+{
+  "name": "@charcoles/swagger",
+  "version": "1.0.0",
+  "description": "Auto-generated Swagger documentation for Charcole APIs",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0",
+    "prepare": "echo 'Ready for npm link'"
+  },
+  "dependencies": {
+    "swagger-ui-express": "^4.6.3",
+    "swagger-jsdoc": "^6.2.8",
+    "glob": "^10.3.10",
+    "zod-to-json-schema": "^3.22.4"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "charcole",
+    "swagger",
+    "openapi",
+    "documentation",
+    "express"
+  ],
+  "author": "Sheraz Manzoor",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
+}

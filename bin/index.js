@@ -42,7 +42,7 @@ function mergePackageJson(base, fragment) {
   return merged;
 }
 
-function copyDirRecursive(src, dest, excludeFiles = []) {
+function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
   if (!fs.existsSync(src)) return;
 
   if (!fs.existsSync(dest)) {
@@ -55,13 +55,25 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
+    // Skip excluded files
     if (excludeFiles.includes(entry.name)) {
       console.log(`Skipping excluded file: ${entry.name}`);
       continue;
     }
 
+    // Skip .tgz files (tarball packages)
+    if (entry.name.endsWith(".tgz")) {
+      console.log(`Skipping tarball: ${entry.name}`);
+      continue;
+    }
+
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath, excludeFiles);
+      // Skip excluded directories
+      if (excludeDirs.includes(entry.name)) {
+        console.log(`Skipping excluded directory: ${entry.name}`);
+        continue;
+      }
+      copyDirRecursive(srcPath, destPath, excludeFiles, excludeDirs);
     } else {
       fs.copyFileSync(srcPath, destPath);
     }
@@ -70,7 +82,7 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
 (async function main() {
   try {
-    console.log("🔥 Welcome to Charcole v2.1 CLI");
+    console.log("🔥 Welcome to Charcole v2.2 CLI");
 
     // Check if project name is provided as command line argument
     const args = process.argv.slice(2);
@@ -114,13 +126,19 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
         message: "Include JWT authentication module?",
         initial: true,
       },
+      {
+        type: "confirm",
+        name: "swagger",
+        message: "Include auto-generated Swagger documentation?",
+        initial: true,
+      },
     );
 
     const responses = await prompts(questions);
 
     // Use command line project name if provided, otherwise use prompt response
     const projectName = projectNameFromArgs || responses.projectName;
-    const { language, auth } = responses;
+    const { language, auth, swagger } = responses;
 
     if (!projectName || projectName.trim() === "") {
       console.error("❌ Project name is required");
@@ -153,9 +171,15 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
     console.log("\n📁 Copying base template structure...");
 
-    copyDirRecursive(templateDir, targetDir, ["basePackage.json"]);
+    // Exclude basePackage.json and swagger module directory from initial copy
+    // We'll handle modules separately based on user selection
+    const srcModulesDir = path.join(templateDir, "src", "modules");
 
-    const templateModulesDir = path.join(templateDir, "src", "modules");
+    // Copy everything except basePackage.json and the modules directory
+    copyDirRecursive(templateDir, targetDir, ["basePackage.json"], ["modules"]);
+
+    // Now handle modules directory manually
+    const templateModulesDir = srcModulesDir;
     const targetModulesDir = path.join(targetDir, "src", "modules");
 
     if (fs.existsSync(templateModulesDir)) {
@@ -177,12 +201,80 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
               console.log(`⏭️  Skipping auth module (not selected)`);
               continue;
             }
+          } else if (moduleName === "swagger") {
+            if (!swagger) {
+              console.log(`⏭️  Skipping swagger module (not selected)`);
+              continue;
+            } else {
+              // Do not copy swagger module folder, just merge package.json below
+              console.log(
+                `⏭️  Not copying swagger module folder (merging dependencies only)`,
+              );
+              continue;
+            }
           } else {
             const moduleDestPath = path.join(targetModulesDir, moduleName);
             console.log(`📦 Copying ${moduleName} module...`);
-            copyDirRecursive(moduleSrcPath, moduleDestPath);
+            // Exclude package.json files from module folders
+            copyDirRecursive(moduleSrcPath, moduleDestPath, ["package.json"]);
           }
         }
+      }
+    }
+    // Handle Swagger module if selected
+    if (swagger) {
+      console.log("\n📦 Adding Swagger module dependencies...");
+      const swaggerModuleDir = path.join(
+        templateDir,
+        "src",
+        "modules",
+        "swagger",
+      );
+      const swaggerPkgPath = path.join(swaggerModuleDir, "package.json");
+      const swaggerTgzPath = path.join(
+        swaggerModuleDir,
+        "charcole-swagger-1.0.0.tgz",
+      );
+
+      // Copy tarball temporarily for npm install (will be cleaned up after)
+      if (fs.existsSync(swaggerTgzPath)) {
+        fs.copyFileSync(
+          swaggerTgzPath,
+          path.join(targetDir, "charcole-swagger-1.0.0.tgz"),
+        );
+        console.log("✓ Copied Swagger tarball temporarily for installation");
+      } else {
+        console.error("❌ Swagger tarball not found at:", swaggerTgzPath);
+      }
+
+      if (fs.existsSync(swaggerPkgPath)) {
+        try {
+          const swaggerPkg = JSON.parse(
+            fs.readFileSync(swaggerPkgPath, "utf-8"),
+          );
+          mergedPkg = mergePackageJson(mergedPkg, swaggerPkg);
+          console.log("✓ Merged Swagger module dependencies");
+          console.log(
+            "  Added dependencies:",
+            Object.keys(swaggerPkg.dependencies || {}).join(", "),
+          );
+          if (swaggerPkg.devDependencies) {
+            console.log(
+              "  Added devDependencies:",
+              Object.keys(swaggerPkg.devDependencies).join(", "),
+            );
+          }
+        } catch (error) {
+          console.error(
+            `❌ Failed to parse Swagger module package.json:`,
+            error.message,
+          );
+        }
+      } else {
+        console.error(
+          "❌ Swagger module package.json not found at:",
+          swaggerPkgPath,
+        );
       }
     }
 
@@ -234,7 +326,7 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
           `Copying auth module to: ${targetAuthPath} (excluding package.json)`,
         );
 
-        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"]);
+        copyDirRecursive(authModulePath, targetAuthPath, ["package.json"], []);
         console.log("✓ Copied auth module files (package.json was excluded)");
 
         const copiedPkgPath = path.join(targetAuthPath, "package.json");
@@ -252,6 +344,61 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
       if (fs.existsSync(targetAuthPath)) {
         console.log("Cleaning up auth directory (not selected)...");
         fs.rmSync(targetAuthPath, { recursive: true, force: true });
+      }
+    }
+
+    // Remove Swagger imports and setup from app file if not selected
+    if (!swagger) {
+      console.log("\n🧹 Removing Swagger references from app file...");
+      const appFileName = language === "ts" ? "app.ts" : "app.js";
+      const appFilePath = path.join(targetDir, "src", appFileName);
+
+      if (fs.existsSync(appFilePath)) {
+        let appContent = fs.readFileSync(appFilePath, "utf-8");
+
+        // Remove swagger-related imports
+        const swaggerConfigImport =
+          language === "ts"
+            ? 'import swaggerOptions from "./config/swagger.config";'
+            : 'import swaggerOptions from "./config/swagger.config.js";';
+        const setupSwaggerImport =
+          'import { setupSwagger } from "@charcoles/swagger";';
+
+        appContent = appContent
+          .split("\n")
+          .filter((line) => {
+            const trimmedLine = line.trim();
+            return (
+              !trimmedLine.includes(swaggerConfigImport.trim()) &&
+              !trimmedLine.includes(setupSwaggerImport.trim()) &&
+              !trimmedLine.includes("setupSwagger(app, swaggerOptions);")
+            );
+          })
+          .join("\n");
+
+        fs.writeFileSync(appFilePath, appContent, "utf-8");
+        console.log(`✓ Removed Swagger references from ${appFileName}`);
+      }
+
+      // Remove swagger config file
+      const swaggerConfigFile =
+        language === "ts" ? "swagger.config.ts" : "swagger.config.js";
+      const swaggerConfigPath = path.join(
+        targetDir,
+        "src",
+        "config",
+        swaggerConfigFile,
+      );
+      if (fs.existsSync(swaggerConfigPath)) {
+        fs.unlinkSync(swaggerConfigPath);
+        console.log(`✓ Removed ${swaggerConfigFile}`);
+      }
+
+      // Remove lib/swagger directory
+      const swaggerLibPath = path.join(targetDir, "src", "lib", "swagger");
+      if (fs.existsSync(swaggerLibPath)) {
+        fs.rmSync(swaggerLibPath, { recursive: true, force: true });
+        console.log("✓ Removed lib/swagger directory");
       }
     }
 
@@ -273,6 +420,15 @@ function copyDirRecursive(src, dest, excludeFiles = []) {
 
     console.log(`\n📦 Installing dependencies using ${pkgManager}...`);
     installDependencies(targetDir, pkgManager);
+
+    // Clean up the swagger tarball after installation
+    if (swagger) {
+      const tgzPath = path.join(targetDir, "charcole-swagger-1.0.0.tgz");
+      if (fs.existsSync(tgzPath)) {
+        fs.unlinkSync(tgzPath);
+        console.log("✓ Cleaned up temporary Swagger tarball");
+      }
+    }
 
     console.log("\n✅ Charcole project created successfully!");
     console.log(
