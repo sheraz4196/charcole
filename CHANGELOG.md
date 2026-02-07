@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### ✨ **New Features**
 
-- **🎯 @charcole/swagger Package** – Effortless API documentation with automatic Zod-to-OpenAPI conversion
+- **🎯 @charcoles/swagger Package** – Effortless API documentation with automatic Zod-to-OpenAPI conversion
 - **📚 Zero Schema Duplication** – Define schemas once in Zod, auto-generate OpenAPI specs
 - **🎁 Built-in Response Templates** – Common responses (Success, ValidationError, Unauthorized, Forbidden, NotFound, InternalError) included
 - **🔄 Always in Sync** – Impossible for documentation to drift from validation schemas
 - **📦 Optional Module** – Include/exclude Swagger during project creation
-- **🌍 Framework Agnostic** – Works with any Express.js project via `npm install @charcole/swagger`
+- **🌍 Framework Agnostic** – Works with any Express.js project via `npm install @charcoles/swagger`
 
 #### 🚀 **Swagger Features**
 

@@ -1,5 +1,5 @@
 {
-  "name": "@charcole/swagger",
+  "name": "@charcoles/swagger",
   "version": "1.0.0",
   "description": "Auto-generated Swagger documentation for Charcole APIs",
   "main": "src/index.js",
@@ -37,5 +37,8 @@
     "express"
   ],
   "author": "Sheraz Manzoor",
-  "license": "ISC"
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
 }

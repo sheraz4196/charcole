@@ -10,7 +10,7 @@
 
 ## What's New in v2.2
 
-### 🎯 Auto-Generated Swagger Documentation (@charcole/swagger)
+### 🎯 Auto-Generated Swagger Documentation (@charcoles/swagger)
 
 The game-changing feature that eliminates 60-80% of API documentation overhead:
 
@@ -19,7 +19,7 @@ The game-changing feature that eliminates 60-80% of API documentation overhead:
 - **Built-in response templates** - Common responses (Success, ValidationError, Unauthorized, NotFound) included
 - **Always in sync** - Impossible for docs to drift from validation schemas
 - **Optional module** - Include/exclude during project creation
-- **Framework agnostic** - Works with any Express.js project via `npm install @charcole/swagger`
+- **Framework agnostic** - Works with any Express.js project via `npm install @charcoles/swagger`
 
 **Before (76 lines of manual duplication):**
 
@@ -49,7 +49,7 @@ const registerSchema = z.object({
  */
 ```
 
-**After with @charcole/swagger (20 lines, zero duplication):**
+**After with @charcoles/swagger (20 lines, zero duplication):**
 
 ```typescript
 // 1. Register schema once in swagger.config.ts
@@ -141,7 +141,7 @@ This leads to:
 
 ### The Solution
 
-@charcole/swagger automatically converts your Zod schemas to OpenAPI:
+@charcoles/swagger automatically converts your Zod schemas to OpenAPI:
 
 ```typescript
 // Before: Register schema in swagger.config.ts

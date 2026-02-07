@@ -1,4 +1,4 @@
-# @charcole/swagger
+# @charcoles/swagger
 
 Effortless API documentation for Express.js applications. Automatically generates OpenAPI 3.0 specs from your Zod validation schemas.
 
@@ -14,7 +14,7 @@ Effortless API documentation for Express.js applications. Automatically generate
 ## Installation
 
 ```bash
-npm install @charcole/swagger zod
+npm install @charcoles/swagger zod
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ npm install @charcole/swagger zod
 
 ```typescript
 import express from "express";
-import { setupSwagger } from "@charcole/swagger";
+import { setupSwagger } from "@charcoles/swagger";
 import { createUserSchema, loginSchema } from "./schemas";
 
 const app = express();
@@ -71,7 +71,7 @@ app.listen(3000);
 router.post("/users", createUser);
 ```
 
-**With @charcole/swagger (16 lines):**
+**With @charcoles/swagger (16 lines):**
 
 ```typescript
 /**
@@ -179,7 +179,7 @@ responses:
 Converts a Zod schema to OpenAPI 3.0 JSON Schema.
 
 ```typescript
-import { convertZodToOpenAPI } from "@charcole/swagger";
+import { convertZodToOpenAPI } from "@charcoles/swagger";
 import { z } from "zod";
 
 const userSchema = z.object({
@@ -195,7 +195,7 @@ const openApiSchema = convertZodToOpenAPI(userSchema, "User");
 Registers multiple Zod schemas at once.
 
 ```typescript
-import { registerSchemas } from "@charcole/swagger";
+import { registerSchemas } from "@charcoles/swagger";
 
 const components = registerSchemas({
   createUserSchema,
@@ -209,7 +209,7 @@ const components = registerSchemas({
 Returns all built-in response templates.
 
 ```typescript
-import { getCommonResponses } from "@charcole/swagger";
+import { getCommonResponses } from "@charcoles/swagger";
 
 const responses = getCommonResponses();
 // { Success: {...}, ValidationError: {...}, Unauthorized: {...}, ... }
@@ -217,7 +217,7 @@ const responses = getCommonResponses();
 
 ## Integration with Zod
 
-@charcole/swagger seamlessly integrates with your Zod validation schemas:
+@charcoles/swagger seamlessly integrates with your Zod validation schemas:
 
 ```typescript
 // Define schema once
@@ -260,7 +260,7 @@ const createUser = async (req, res) => {
 Full TypeScript support with type definitions included:
 
 ```typescript
-import { setupSwagger, SwaggerOptions, OpenAPISpec } from "@charcole/swagger";
+import { setupSwagger, SwaggerOptions, OpenAPISpec } from "@charcoles/swagger";
 import type { Application } from "express";
 
 const app: Application = express();
@@ -282,7 +282,7 @@ Works perfectly with JavaScript projects too:
 
 ```javascript
 const express = require("express");
-const { setupSwagger } = require("@charcole/swagger");
+const { setupSwagger } = require("@charcoles/swagger");
 const { z } = require("zod");
 
 const app = express();
@@ -304,7 +304,7 @@ setupSwagger(app, {
 
 ```typescript
 import { z } from "zod";
-import { setupSwagger } from "@charcole/swagger";
+import { setupSwagger } from "@charcoles/swagger";
 
 // Define schemas
 const createPostSchema = z.object({
@@ -428,7 +428,7 @@ setupSwagger(app, {
 
 ## Benefits
 
-### Before @charcole/swagger
+### Before @charcoles/swagger
 
 ```typescript
 // Zod schema (for validation)
@@ -480,7 +480,7 @@ const createUserSchema = z.object({
 - ❌ Copy-paste errors
 - ❌ High maintenance burden
 
-### After @charcole/swagger
+### After @charcoles/swagger
 
 ```typescript
 // Zod schema (single source of truth)
@@ -526,15 +526,15 @@ setupSwagger(app, {
 
 ## Comparison
 
-| Feature                 | @charcole/swagger | swagger-jsdoc | tsoa   | NestJS |
-| ----------------------- | ----------------- | ------------- | ------ | ------ |
-| **Zero duplication**    | ✅                | ❌            | ✅     | ✅     |
-| **Framework agnostic**  | ✅                | ✅            | ❌     | ❌     |
-| **JavaScript support**  | ✅                | ✅            | ❌     | ❌     |
-| **Auto Zod conversion** | ✅                | ❌            | ❌     | ⚠️     |
-| **No build step**       | ✅                | ✅            | ❌     | ✅     |
-| **Lines of code**       | Very Low          | High          | Low    | Medium |
-| **Learning curve**      | Easy              | Easy          | Medium | High   |
+| Feature                 | @charcoles/swagger | swagger-jsdoc | tsoa   | NestJS |
+| ----------------------- | ------------------ | ------------- | ------ | ------ |
+| **Zero duplication**    | ✅                 | ❌            | ✅     | ✅     |
+| **Framework agnostic**  | ✅                 | ✅            | ❌     | ❌     |
+| **JavaScript support**  | ✅                 | ✅            | ❌     | ❌     |
+| **Auto Zod conversion** | ✅                 | ❌            | ❌     | ⚠️     |
+| **No build step**       | ✅                 | ✅            | ❌     | ✅     |
+| **Lines of code**       | Very Low           | High          | Low    | Medium |
+| **Learning curve**      | Easy               | Easy          | Medium | High   |
 
 ## Troubleshooting
 
@@ -555,7 +555,7 @@ setupSwagger(app, {
 Use the helper functions for custom conversions:
 
 ```typescript
-import { convertZodToOpenAPI } from "@charcole/swagger";
+import { convertZodToOpenAPI } from "@charcoles/swagger";
 
 const customSchema = convertZodToOpenAPI(myZodSchema, "MySchema");
 // Modify customSchema as needed
@@ -575,4 +575,4 @@ Issues and PRs welcome at [https://github.com/your-repo/charcole](https://github
 
 ---
 
-**@charcole/swagger** - Because life's too short to write schemas twice. 🎉
+**@charcoles/swagger** - Because life's too short to write schemas twice. 🎉

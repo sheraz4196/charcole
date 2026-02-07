@@ -12,7 +12,7 @@ import { sendSuccess } from "./utils/response.ts";
 import { logger } from "./utils/logger.ts";
 import routes from "./routes/index.ts";
 import swaggerOptions from "./config/swagger.config.ts";
-import { setupSwagger } from "@charcole/swagger";
+import { setupSwagger } from "@charcoles/swagger";
 
 export const app = express();
 

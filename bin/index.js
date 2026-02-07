@@ -362,7 +362,7 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
             ? 'import swaggerOptions from "./config/swagger.config";'
             : 'import swaggerOptions from "./config/swagger.config.js";';
         const setupSwaggerImport =
-          'import { setupSwagger } from "@charcole/swagger";';
+          'import { setupSwagger } from "@charcoles/swagger";';
 
         appContent = appContent
           .split("\n")

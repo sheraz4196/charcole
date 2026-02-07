@@ -1,10 +1,10 @@
 # Swagger Documentation Guide
 
-**@charcole/swagger** - Effortless API documentation that eliminates duplication and dramatically reduces manual work.
+**@charcoles/swagger** - Effortless API documentation that eliminates duplication and dramatically reduces manual work.
 
 ## 🎯 What's New
 
-The new @charcole/swagger **automatically generates API schemas from your Zod validations**, eliminating the need to write the same schema twice. You now write **60-80% less documentation** while keeping perfect synchronization between your validation logic and API docs.
+The new @charcoles/swagger **automatically generates API schemas from your Zod validations**, eliminating the need to write the same schema twice. You now write **60-80% less documentation** while keeping perfect synchronization between your validation logic and API docs.
 
 ## 🚀 Quick Start
 
@@ -325,7 +325,7 @@ responses:
 For advanced use cases, you can use helper functions:
 
 ```typescript
-import { convertZodToOpenAPI, endpoint } from "@charcole/swagger";
+import { convertZodToOpenAPI, endpoint } from "@charcoles/swagger";
 
 // Convert a single Zod schema to JSON Schema
 const jsonSchema = convertZodToOpenAPI(myZodSchema, "MySchema");
@@ -455,17 +455,17 @@ Visit `/api-docs.json` (if enabled) or check the console logs on startup.
 
 ---
 
-## 📦 Using @charcole/swagger in Non-Charcole Projects
+## 📦 Using @charcoles/swagger in Non-Charcole Projects
 
-Even if you didn't create your project with `create-charcole`, you can still use @charcole/swagger!
+Even if you didn't create your project with `create-charcole`, you can still use @charcoles/swagger!
 
 ```bash
-npm install @charcole/swagger zod
+npm install @charcoles/swagger zod
 ```
 
 ```typescript
 import express from "express";
-import { setupSwagger } from "@charcole/swagger";
+import { setupSwagger } from "@charcoles/swagger";
 import { mySchema } from "./schemas";
 
 const app = express();
@@ -558,4 +558,4 @@ Check the examples in:
 
 ---
 
-**Remember:** With @charcole/swagger, you define your schemas once in Zod, and documentation happens automatically. No more duplication, no more sync issues, dramatically less effort! 🎉
+**Remember:** With @charcoles/swagger, you define your schemas once in Zod, and documentation happens automatically. No more duplication, no more sync issues, dramatically less effort! 🎉

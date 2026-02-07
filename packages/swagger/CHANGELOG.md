@@ -1,8 +1,8 @@
-# 🎉 @charcole/swagger - What Changed
+# 🎉 @charcoles/swagger - What Changed
 
 ## Summary
 
-**@charcole/swagger is now 100% EFFORTLESS** with automatic Zod schema conversion, eliminating 60-80% of documentation overhead while maintaining full backward compatibility.
+**@charcoles/swagger is now 100% EFFORTLESS** with automatic Zod schema conversion, eliminating 60-80% of documentation overhead while maintaining full backward compatibility.
 
 ---
 
@@ -110,7 +110,7 @@ import {
   getCommonResponses,
   detectSecurity,
   endpoint,
-} from "@charcole/swagger";
+} from "@charcoles/swagger";
 ```
 
 ---
@@ -401,4 +401,4 @@ Check the comprehensive documentation:
 
 ---
 
-**@charcole/swagger v2.0.0** - Now 100% effortless! 🎉
+**@charcoles/swagger v2.0.0** - Now 100% effortless! 🎉

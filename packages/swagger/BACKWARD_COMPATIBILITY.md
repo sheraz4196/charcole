@@ -1,4 +1,4 @@
-# @charcole/swagger v2.0.0 - Backward Compatibility Test
+# @charcoles/swagger v2.0.0 - Backward Compatibility Test
 
 ## Test Cases
 
@@ -84,7 +84,7 @@ setupSwagger(app, {
 Works fine without Zod schemas:
 
 ```typescript
-import { setupSwagger } from "@charcole/swagger";
+import { setupSwagger } from "@charcoles/swagger";
 
 setupSwagger(app, {
   title: "My API",
