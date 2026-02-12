@@ -19,7 +19,7 @@ import { createItemSchema } from "../modules/health/controller.ts";
 const swaggerConfig = {
   title: "My API",
   version: "1.0.1",
-  // Auto-register schemas - they'll be converted to OpenAPI automatically!
+  // Auto-register schemas - they'll be  converted to OpenAPI automatically!
   schemas: {
     registerSchema,
     loginSchema,
