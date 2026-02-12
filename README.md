@@ -348,6 +348,7 @@ We welcome contributions! Please:
 5. Document new modules thoroughly
 6. Update README.md for significant changes
 7. If adding Swagger docs, use Zod schemas as single source of truth
+Good luck!!!
 
 ## 📄 License
 
