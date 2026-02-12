@@ -56,7 +56,7 @@ app.get(
       res,
       {
         message: "Welcome to Charcole API",
-        version: "1.0.0",
+        version: "1.0.1",
         environment: env.NODE_ENV,
       },
       200,

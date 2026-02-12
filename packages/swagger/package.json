@@ -1,6 +1,6 @@
 {
   "name": "@charcoles/swagger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Auto-generated Swagger documentation for Charcole APIs",
   "main": "src/index.js",
   "types": "src/index.d.ts",
