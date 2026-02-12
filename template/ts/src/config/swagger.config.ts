@@ -3,7 +3,7 @@ import { createItemSchema } from "../modules/health/controller.ts";
 
 const swaggerConfig = {
   title: process.env.APP_NAME || "Charcole API",
-  version: process.env.APP_VERSION || "1.0.0",
+  version: process.env.APP_VERSION || "1.0.1",
   description: "Production-ready Node.js Express API",
   path: "/api-docs",
   servers: [

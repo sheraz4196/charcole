@@ -37,7 +37,7 @@ Old setup without new options:
 ```typescript
 setupSwagger(app, {
   title: "My API",
-  version: "1.0.0",
+  version: "1.0.1",
 });
 ```
 

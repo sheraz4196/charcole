@@ -30,7 +30,7 @@ const app = express();
 
 setupSwagger(app, {
   title: "My API",
-  version: "1.0.0",
+  version: "1.0.1",
   schemas: {
     createUserSchema, // Auto-converted from Zod!
     loginSchema,
@@ -107,7 +107,7 @@ Sets up Swagger UI and documentation generation.
 | Option                   | Type    | Default                            | Description                         |
 | ------------------------ | ------- | ---------------------------------- | ----------------------------------- |
 | `title`                  | string  | "Charcole API"                     | API title                           |
-| `version`                | string  | "1.0.0"                            | API version                         |
+| `version`                | string  | "1.0.1"                            | API version                         |
 | `description`            | string  | "Auto-generated API documentation" | API description                     |
 | `path`                   | string  | "/api-docs"                        | Swagger UI path                     |
 | `servers`                | array   | `[{url: "http://localhost:3000"}]` | Server URLs                         |
@@ -267,7 +267,7 @@ const app: Application = express();
 
 const options: SwaggerOptions = {
   title: "My API",
-  version: "1.0.0",
+  version: "1.0.1",
   schemas: {
     mySchema,
   },

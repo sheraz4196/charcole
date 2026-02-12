@@ -233,14 +233,14 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
       const swaggerPkgPath = path.join(swaggerModuleDir, "package.json");
       const swaggerTgzPath = path.join(
         swaggerModuleDir,
-        "charcole-swagger-1.0.0.tgz",
+        "charcole-swagger-1.0.1.tgz",
       );
 
       // Copy tarball temporarily for npm install (will be cleaned up after)
       if (fs.existsSync(swaggerTgzPath)) {
         fs.copyFileSync(
           swaggerTgzPath,
-          path.join(targetDir, "charcole-swagger-1.0.0.tgz"),
+          path.join(targetDir, "charcole-swagger-1.0.1.tgz"),
         );
         console.log("✓ Copied Swagger tarball temporarily for installation");
       } else {
@@ -423,7 +423,7 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
 
     // Clean up the swagger tarball after installation
     if (swagger) {
-      const tgzPath = path.join(targetDir, "charcole-swagger-1.0.0.tgz");
+      const tgzPath = path.join(targetDir, "charcole-swagger-1.0.1.tgz");
       if (fs.existsSync(tgzPath)) {
         fs.unlinkSync(tgzPath);
         console.log("✓ Cleaned up temporary Swagger tarball");

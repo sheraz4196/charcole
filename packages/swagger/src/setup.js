@@ -7,7 +7,7 @@ import { registerSchemas, getCommonResponses } from "./helpers.js";
 export function setupSwagger(app, options = {}) {
   const defaultOptions = {
     title: "Charcole API",
-    version: "1.0.0",
+    version: "1.0.1",
     description: "Auto-generated API documentation",
     path: "/api-docs",
     servers: [{ url: "http://localhost:3000", description: "Local server" }],

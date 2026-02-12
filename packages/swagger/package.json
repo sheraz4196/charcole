@@ -1,6 +1,6 @@
 {
   "name": "@charcoles/swagger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Auto-generated Swagger documentation for Charcole APIs",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -11,6 +11,19 @@
       "default": "./src/index.js"
     }
   },
+  "author": {
+    "name": "Sheraz Manzoor",
+    "email": "sheraz.dev121@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sheraz4196/create-charcole.git",
+    "directory": "packages/swagger"
+  },
+  "bugs": {
+    "url": "https://github.com/sheraz4196/create-charcole/issues"
+  },
+  "homepage": "https://www.charcole.site/guides/swagger/introduction",
   "scripts": {
     "test": "echo \"No tests yet\" && exit 0",
     "prepare": "echo 'Ready for npm link'"
@@ -34,9 +47,9 @@
     "swagger",
     "openapi",
     "documentation",
-    "express"
+    "express",
+    "charcole swagger"
   ],
-  "author": "Sheraz Manzoor",
   "license": "ISC",
   "publishConfig": {
     "access": "public"

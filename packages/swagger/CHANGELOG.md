@@ -121,7 +121,7 @@ import {
 setupSwagger(app, {
   // Old options (still work)
   title: "My API",
-  version: "1.0.0",
+  version: "1.0.1",
   path: "/api-docs",
   servers: [...],
 
