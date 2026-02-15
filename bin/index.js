@@ -418,6 +418,56 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
       Object.keys(mergedPkg.devDependencies || {}).join(", "),
     );
 
+    // Create .env from .env.example and ensure APP_NAME default exists
+    try {
+      const exampleEnvPath = path.join(targetDir, ".env.example");
+      const envPath = path.join(targetDir, ".env");
+
+      if (fs.existsSync(exampleEnvPath) && !fs.existsSync(envPath)) {
+        let exampleContent = fs.readFileSync(exampleEnvPath, "utf-8");
+
+        if (!/APP_NAME\s*=/.test(exampleContent)) {
+          exampleContent = `APP_NAME=CHARCOLE API\n` + exampleContent;
+        }
+
+        fs.writeFileSync(envPath, exampleContent, "utf-8");
+        console.log("✓ Created .env from .env.example with default APP_NAME");
+      }
+    } catch (err) {
+      console.warn("⚠️  Failed to create .env automatically:", err.message);
+    }
+
+    // Initialize git repository to make project git-friendly
+    try {
+      const { execSync } = require("child_process");
+
+      execSync("git --version", { stdio: "ignore" });
+      execSync("git init", { cwd: targetDir, stdio: "ignore" });
+
+      // Ensure .gitignore exists (copy from template if missing)
+      const gitignoreSrc = path.join(templateDir, ".gitignore");
+      const gitignoreDest = path.join(targetDir, ".gitignore");
+      if (!fs.existsSync(gitignoreDest) && fs.existsSync(gitignoreSrc)) {
+        fs.copyFileSync(gitignoreSrc, gitignoreDest);
+      }
+
+      // Stage files and attempt initial commit; ignore commit errors (e.g., missing git user config)
+      try {
+        execSync("git add .", { cwd: targetDir, stdio: "ignore" });
+        execSync('git commit -m "chore: initial commit from Charcole"', {
+          cwd: targetDir,
+          stdio: "ignore",
+        });
+        console.log("✓ Initialized git repository and created initial commit");
+      } catch (commitErr) {
+        console.log(
+          "✓ Initialized git repository (skipped commit — configure git user to enable commits)",
+        );
+      }
+    } catch (gitErr) {
+      console.log("ℹ️  Git not available; skipping repository initialization");
+    }
+
     console.log(`\n📦 Installing dependencies using ${pkgManager}...`);
     installDependencies(targetDir, pkgManager);
 

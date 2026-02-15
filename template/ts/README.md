@@ -34,9 +34,13 @@ Welcome! This guide will help you set up and start using the Charcole API framew
 
 2. **Create environment file**
 
-   ```bash
-   cp .env.example .env
-   ```
+The `create-charcole` CLI will automatically create a `.env` from `.env.example` and initialize a Git repository for you. Edit the generated `.env` as needed.
+
+If you prefer to create it manually:
+
+```bash
+cp .env.example .env
+```
 
 3. **Run the charcole**
    ```bash
