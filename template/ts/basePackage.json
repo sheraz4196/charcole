@@ -1,6 +1,6 @@
 {
   "name": "charcole",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Production-grade Node.js Express API",
   "main": "dist/server.js",
   "type": "module",
