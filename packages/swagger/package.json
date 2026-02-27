@@ -17,11 +17,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sheraz4196/create-charcole.git",
+    "url": "https://github.com/sheraz4196/charcole.git",
     "directory": "packages/swagger"
   },
   "bugs": {
-    "url": "https://github.com/sheraz4196/create-charcole/issues"
+    "url": "https://github.com/sheraz4196/charcole/issues"
   },
   "homepage": "https://www.charcole.site/guides/swagger/introduction",
   "scripts": {

@@ -9,10 +9,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sheraz4196/create-charcole.git"
+    "url": "https://github.com/sheraz4196/charcole.git"
   },
   "bugs": {
-    "url": "https://github.com/sheraz4196/create-charcole/issues"
+    "url": "https://github.com/sheraz4196/charcole/issues"
   },
   "homepage": "https://www.charcole.site/",
   "bin": {
