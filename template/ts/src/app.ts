@@ -1,4 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
+import { existsSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import { userRepo } from "./repositories/user.repo.ts";
 import { env } from "./config/env.ts";
@@ -14,6 +17,12 @@ import routes from "./routes/index.ts";
 import swaggerOptions from "./config/swagger.config.ts";
 import { setupSwagger } from "@charcoles/swagger";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const paymentsModulePath = join(
+  __dirname,
+  "modules/payments/payments.routes.ts",
+);
+
 export const app = express();
 
 app.set("trust proxy", 1);
@@ -26,6 +35,10 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+if (existsSync(paymentsModulePath)) {
+  app.use("/payments/webhook", express.raw({ type: "application/json" }));
+}
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
