@@ -1,4 +1,7 @@
 import express from "express";
+import { existsSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { userRepo } from "./repositories/user.repo.js";
 import cors from "cors";
 import { env } from "./config/env.js";
@@ -14,6 +17,13 @@ import { logger } from "./utils/logger.js";
 import routes from "./routes/index.js";
 import swaggerOptions from "./config/swagger.config.js";
 import { setupSwagger } from "@charcoles/swagger";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const paymentsModulePath = join(
+  __dirname,
+  "modules/payments/payments.routes.js",
+);
+
 export const app = express();
 
 // Trust proxy
@@ -30,6 +40,13 @@ app.use(
 );
 
 // Body parsing middleware
+// Webhook raw body — must be registered BEFORE express.json()
+// Required for Stripe and LemonSqueezy webhook signature verification.
+// express.json() destroys the raw bytes needed for HMAC verification.
+if (existsSync(paymentsModulePath)) {
+  app.use("/payments/webhook", express.raw({ type: "application/json" }));
+}
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
