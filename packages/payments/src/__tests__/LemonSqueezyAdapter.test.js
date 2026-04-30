@@ -7,7 +7,6 @@ vi.mock("@lemonsqueezy/lemonsqueezy.js", () => {
     lemonSqueezySetup: vi.fn(),
     createCheckout: vi.fn(),
     getOrder: vi.fn(),
-    createRefund: vi.fn(),
   };
 });
 

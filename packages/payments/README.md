@@ -219,4 +219,4 @@ All errors are `PaymentError` instances with specific codes:
 
 ## License
 
-MIT
+ISC

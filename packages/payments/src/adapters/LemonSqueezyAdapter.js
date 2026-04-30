@@ -2,7 +2,6 @@ import {
   lemonSqueezySetup,
   createCheckout,
   getOrder,
-  createRefund,
 } from "@lemonsqueezy/lemonsqueezy.js";
 import { createHmac } from "crypto";
 import { PaymentAdapter } from "./PaymentAdapter.js";
@@ -82,18 +81,13 @@ export class LemonSqueezyAdapter extends PaymentAdapter {
 
   async refundPayment({ paymentId, amount }) {
     try {
-      const refund = await createRefund({ orderId: paymentId });
-      if (refund.error) {
-        throw new PaymentError(
-          `LemonSqueezy refund failed: ${refund.error.message}`,
-          "LS_REFUND_FAILED",
-        );
-      }
-      return {
-        id: String(refund.data.data.id),
-        status: refund.data.data.attributes.status,
-        amount: refund.data.data.attributes.amount,
-      };
+      // LemonSqueezy SDK v4 requires manual refund creation via API
+      // This is a placeholder implementation - full refund support requires
+      // direct API calls with authentication
+      throw new PaymentError(
+        "LemonSqueezy refunds require manual implementation with API client",
+        "LS_REFUND_NOT_SUPPORTED",
+      );
     } catch (error) {
       if (error instanceof PaymentError) throw error;
       throw new PaymentError(

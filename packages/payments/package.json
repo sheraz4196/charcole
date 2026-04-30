@@ -1,6 +1,6 @@
 {
   "name": "@charcoles/payments",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Drop-in payment processing for Express apps. Stripe + LemonSqueezy.",
   "type": "module",
   "main": "./src/index.js",
