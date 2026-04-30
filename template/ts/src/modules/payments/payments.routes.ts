@@ -10,7 +10,7 @@ const router = Router();
 
 /**
  * @swagger
- * /payments/create-intent:
+ * /api/payments/create-intent:
  *   post:
  *     summary: Create a payment intent or checkout session
  *     tags:
@@ -48,7 +48,7 @@ router.post(
 
 /**
  * @swagger
- * /payments/refund:
+ * /api/payments/refund:
  *   post:
  *     summary: Refund a payment
  *     tags:
@@ -82,7 +82,7 @@ router.post(
 
 /**
  * @swagger
- * /payments/status/{paymentId}:
+ * /api/payments/status/{paymentId}:
  *   get:
  *     summary: Get payment status
  *     tags:
@@ -103,7 +103,7 @@ router.get("/status/:paymentId", controller.getPaymentStatus);
 
 /**
  * @swagger
- * /payments/webhook:
+ * /api/payments/webhook:
  *   post:
  *     summary: Receive payment provider webhook events
  *     tags:
@@ -120,6 +120,6 @@ router.get("/status/:paymentId", controller.getPaymentStatus);
  *       400:
  *         description: Missing signature header
  */
-router.post("/webhook", controller.handleWebhook);
+router.post("/api/payments/webhook", controller.handleWebhook);
 
 export default router;
