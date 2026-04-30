@@ -3,7 +3,7 @@ import {
   createCheckout,
   getOrder,
   createRefund,
-} from "@lemonsqueezy/lemonsqueezy-js";
+} from "@lemonsqueezy/lemonsqueezy.js";
 import { createHmac } from "crypto";
 import { PaymentAdapter } from "./PaymentAdapter.js";
 import { PaymentError } from "../errors/PaymentError.js";

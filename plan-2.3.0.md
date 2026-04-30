@@ -193,7 +193,7 @@ packages/payments/
 └── charcole-payments-1.0.0.tgz    # Built tarball (generated, not committed)
 
 template/js/src/modules/payments/
-├── package.json                     # { "dependencies": { "stripe": "^14", "@lemonsqueezy/lemonsqueezy-js": "^3" } }
+├── package.json                     # { "dependencies": { "stripe": "^14", "@lemonsqueezy/lemonsqueezy.js": "^3" } }
 ├── payments.constants.js
 ├── payments.controller.js
 ├── payments.service.js
@@ -284,7 +284,7 @@ packages/payments/CHANGELOG.md
   },
   "dependencies": {
     "stripe": "^14.0.0",
-    "@lemonsqueezy/lemonsqueezy-js": "^3.0.0",
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -595,7 +595,7 @@ import {
   getOrder,
   createRefund,
   listWebhooks,
-} from "@lemonsqueezy/lemonsqueezy-js";
+} from "@lemonsqueezy/lemonsqueezy.js";
 import { createHmac } from "crypto";
 import { PaymentAdapter } from "./PaymentAdapter.js";
 import { PaymentError } from "../errors/PaymentError.js";
@@ -1367,7 +1367,7 @@ describe("StripeAdapter", () => {
 
 ### Unit Tests: LemonSqueezyAdapter (pattern only)
 
-Test all 4 adapter methods with mocked `@lemonsqueezy/lemonsqueezy-js` functions. Test that HMAC verification throws on invalid signatures.
+Test all 4 adapter methods with mocked `@lemonsqueezy/lemonsqueezy.js` functions. Test that HMAC verification throws on invalid signatures.
 
 ### Integration Tests: CLI Generation
 

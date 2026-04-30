@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LemonSqueezyAdapter } from "../adapters/LemonSqueezyAdapter.js";
 import { PaymentError } from "../errors/PaymentError.js";
 
-vi.mock("@lemonsqueezy/lemonsqueezy-js", () => {
+vi.mock("@lemonsqueezy/lemonsqueezy.js", () => {
   return {
     lemonSqueezySetup: vi.fn(),
     createCheckout: vi.fn(),
@@ -17,7 +17,7 @@ describe("LemonSqueezyAdapter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLS = vi.mocked(require("@lemonsqueezy/lemonsqueezy-js"));
+    mockLS = vi.mocked(require("@lemonsqueezy/lemonsqueezy.js"));
     adapter = new LemonSqueezyAdapter({
       apiKey: "api_fake",
       webhookSecret: "secret_fake",
