@@ -9,13 +9,36 @@ import {
 const router = Router();
 
 /**
- * POST /payments/create-intent
- * Creates a Stripe PaymentIntent or a LemonSqueezy checkout session.
- *
- * Body: { amount: number, currency: string, metadata?: object }
- *
- * Stripe response includes: clientSecret (pass to frontend Stripe.js)
- * LemonSqueezy response includes: checkoutUrl (redirect user to this URL)
+ * @swagger
+ * /api/payments/create-intent:
+ *   post:
+ *     summary: Create a payment intent or checkout session
+ *     tags:
+ *       - Payments
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [amount, currency]
+ *             properties:
+ *               amount:
+ *                 type: integer
+ *                 description: Amount in smallest currency unit (cents for USD, paisas for PKR)
+ *                 example: 2999
+ *               currency:
+ *                 type: string
+ *                 description: ISO 4217 currency code
+ *                 example: usd
+ *               metadata:
+ *                 type: object
+ *                 description: Optional metadata. LemonSqueezy requires variantId here.
+ *     responses:
+ *       201:
+ *         description: Payment intent created
+ *       400:
+ *         description: Validation error
  */
 router.post(
   "/create-intent",
@@ -24,11 +47,32 @@ router.post(
 );
 
 /**
- * POST /payments/refund
- * Refunds a payment fully or partially.
- *
- * Body: { paymentId: string, amount?: number }
- * Omit amount for full refund.
+ * @swagger
+ * /api/payments/refund:
+ *   post:
+ *     summary: Refund a payment
+ *     tags:
+ *       - Payments
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [paymentId]
+ *             properties:
+ *               paymentId:
+ *                 type: string
+ *                 example: pi_123456789
+ *               amount:
+ *                 type: integer
+ *                 description: Optional refund amount in smallest currency unit
+ *                 example: 2999
+ *     responses:
+ *       200:
+ *         description: Refund processed
+ *       400:
+ *         description: Validation error
  */
 router.post(
   "/refund",
@@ -37,21 +81,44 @@ router.post(
 );
 
 /**
- * GET /payments/status/:paymentId
- * Gets the current status of a payment.
- * Returns normalized status: 'pending' | 'paid' | 'failed' | 'refunded'
+ * @swagger
+ * /api/payments/status/{paymentId}:
+ *   get:
+ *     summary: Get payment status
+ *     tags:
+ *       - Payments
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payment status retrieved
+ *       404:
+ *         description: Payment not found
  */
 router.get("/status/:paymentId", controller.getPaymentStatus);
 
 /**
- * POST /payments/webhook
- * Receives webhook events from Stripe or LemonSqueezy.
- *
- * DO NOT add validateRequest middleware here.
- * DO NOT add authentication middleware here.
- *
- * This route receives raw Buffer bodies (set up in app.js).
- * Signature verification is done inside the controller via the adapter.
+ * @swagger
+ * /api/payments/webhook:
+ *   post:
+ *     summary: Receive payment provider webhook events
+ *     tags:
+ *       - Payments
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received
+ *       400:
+ *         description: Missing signature header
  */
 router.post("/webhook", controller.handleWebhook);
 
