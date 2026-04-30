@@ -11,6 +11,7 @@ import { validateRequest } from "../middlewares/validateRequest.js";
 import { requireAuth } from "../modules/auth/auth.middlewares.js";
 import protectedRoutes from "./protected.js";
 import authRoutes from "../modules/auth/auth.routes.js";
+import paymentsRoutes from "../modules/payments/payments.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const router = Router();
