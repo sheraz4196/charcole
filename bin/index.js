@@ -132,13 +132,31 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
         message: "Include auto-generated Swagger documentation?",
         initial: true,
       },
+      {
+        type: "confirm",
+        name: "includePayments",
+        message: "Include payments module? (Stripe / LemonSqueezy)",
+        initial: false,
+      },
+      {
+        type: (prev, values) => (values.includePayments ? "select" : null),
+        name: "paymentProvider",
+        message: "Which payment provider will you use?",
+        choices: [
+          { title: "Stripe (global)", value: "stripe" },
+          { title: "LemonSqueezy (Pakistan + global)", value: "lemonsqueezy" },
+          { title: "Both (I'll switch via env var)", value: "both" },
+        ],
+        initial: 0,
+      },
     );
 
     const responses = await prompts(questions);
 
     // Use command line project name if provided, otherwise use prompt response
     const projectName = projectNameFromArgs || responses.projectName;
-    const { language, auth, swagger } = responses;
+    const { language, auth, swagger, includePayments, paymentProvider } =
+      responses;
 
     if (!projectName || projectName.trim() === "") {
       console.error("❌ Project name is required");
@@ -347,6 +365,94 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
       }
     }
 
+    // Handle payments module if selected
+    if (includePayments) {
+      console.log("\n📦 Adding payments module...");
+
+      // The payments module is in src/modules/payments in the template
+      const paymentsModulePath = path.join(
+        templateDir,
+        "src",
+        "modules",
+        "payments",
+      );
+
+      if (!fs.existsSync(paymentsModulePath)) {
+        console.error(`❌ Payments module not found at ${paymentsModulePath}`);
+      } else {
+        // 1. Merge payments module's package.json
+        const paymentsPkgPath = path.join(paymentsModulePath, "package.json");
+
+        if (fs.existsSync(paymentsPkgPath)) {
+          try {
+            const paymentsPkg = JSON.parse(
+              fs.readFileSync(paymentsPkgPath, "utf-8"),
+            );
+            console.log("✓ Found payments module package.json");
+
+            mergedPkg = mergePackageJson(mergedPkg, paymentsPkg);
+            console.log("✓ Merged payments module dependencies");
+            console.log(
+              "  Added dependencies:",
+              Object.keys(paymentsPkg.dependencies || {}).join(", "),
+            );
+            if (paymentsPkg.devDependencies) {
+              console.log(
+                "  Added devDependencies:",
+                Object.keys(paymentsPkg.devDependencies).join(", "),
+              );
+            }
+          } catch (error) {
+            console.error(
+              `❌ Failed to parse payments module package.json:`,
+              error.message,
+            );
+          }
+        } else {
+          console.error(
+            "❌ Payments module package.json not found at:",
+            paymentsPkgPath,
+          );
+        }
+
+        const targetPaymentsPath = path.join(targetModulesDir, "payments");
+        console.log(
+          `Copying payments module to: ${targetPaymentsPath} (excluding package.json)`,
+        );
+
+        copyDirRecursive(
+          paymentsModulePath,
+          targetPaymentsPath,
+          ["package.json"],
+          [],
+        );
+        console.log(
+          "✓ Copied payments module files (package.json was excluded)",
+        );
+
+        const copiedPkgPath = path.join(targetPaymentsPath, "package.json");
+        if (fs.existsSync(copiedPkgPath)) {
+          console.warn(
+            "⚠️ package.json was accidentally copied, removing it...",
+          );
+          fs.unlinkSync(copiedPkgPath);
+        }
+      }
+    } else {
+      console.log("\n⏭️  Skipping payments module");
+
+      const targetPaymentsPath = path.join(
+        targetDir,
+        "src",
+        "modules",
+        "payments",
+      );
+      if (fs.existsSync(targetPaymentsPath)) {
+        console.log("Cleaning up payments directory (not selected)...");
+        fs.rmSync(targetPaymentsPath, { recursive: true, force: true });
+      }
+    }
+
     // Remove Swagger imports and setup from app file if not selected
     if (!swagger) {
       console.log("\n🧹 Removing Swagger references from app file...");
@@ -428,6 +534,20 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
 
         if (!/APP_NAME\s*=/.test(exampleContent)) {
           exampleContent = `APP_NAME=CHARCOLE API\n` + exampleContent;
+        }
+
+        if (includePayments) {
+          if (paymentProvider === "both") {
+            exampleContent = exampleContent.replace(
+              "PAYMENT_PROVIDER=",
+              'PAYMENT_PROVIDER=   # Set to "stripe" or "lemonsqueezy"',
+            );
+          } else {
+            exampleContent = exampleContent.replace(
+              "PAYMENT_PROVIDER=",
+              `PAYMENT_PROVIDER=${paymentProvider}`,
+            );
+          }
         }
 
         fs.writeFileSync(envPath, exampleContent, "utf-8");

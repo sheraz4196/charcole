@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@charcoles/payments": "^1.0.0",
+    "stripe": "^14.0.0",
+    "@lemonsqueezy/lemonsqueezy-js": "^3.0.0"
+  }
+}
