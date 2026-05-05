@@ -120,6 +120,6 @@ router.get("/status/:paymentId", controller.getPaymentStatus);
  *       400:
  *         description: Missing signature header
  */
-router.post("/api/payments/webhook", controller.handleWebhook);
+router.post("/webhook", controller.handleWebhook);
 
 export default router;

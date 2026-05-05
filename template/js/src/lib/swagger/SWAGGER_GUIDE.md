@@ -96,6 +96,40 @@ That's it! Your Zod schemas are now available as `$ref` in Swagger.
 
 **Result:** 60 lines eliminated! And your schema stays in sync automatically.
 
+### Example 2.1: Documenting a Payments Webhook Endpoint
+
+```javascript
+/**
+ * @swagger
+ * /api/payments/webhook:
+ *   post:
+ *     summary: Receive payment provider webhook events
+ *     tags:
+ *       - Payments
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received
+ *       400:
+ *         description: Missing signature header
+ */
+router.post("/webhook", handleWebhook);
+```
+
+When you expose a webhook route, mount raw JSON middleware before `express.json()` so the provider signature verification receives the raw body:
+
+```javascript
+app.use("/payments/webhook", express.raw({ type: "application/json" }));
+app.use(express.json());
+```
+
+This means your final webhook route becomes `/api/payments/webhook` when the payments router is mounted at `/api`.
+
 ---
 
 ## 📚 Complete Examples

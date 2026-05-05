@@ -173,6 +173,10 @@ setupSwagger(app, {
 
 **See complete guide:** `src/lib/swagger/SWAGGER_GUIDE.md` (when swagger is enabled)
 
+> Payment routes such as `/api/payments/create-intent`, `/api/payments/refund`, `/api/payments/status/{paymentId}`, and `/api/payments/webhook` are documented using route-level `@swagger` comments and Zod schemas.
+> For webhook routes, mount raw JSON middleware before `express.json()`:
+> `app.use('/payments/webhook', express.raw({ type: 'application/json' }))`
+
 ## Repository Pattern: A Game Changer
 
 ### The Problem
@@ -348,7 +352,6 @@ We welcome contributions! Please:
 5. Document new modules thoroughly
 6. Update README.md for significant changes
 7. If adding Swagger docs, use Zod schemas as single source of truth
-
 
 Good luck!!!
 
