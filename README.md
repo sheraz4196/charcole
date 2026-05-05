@@ -1,6 +1,6 @@
-# Charcole API v2.2
+# Charcole API v2.3
 
-> **Charcole v2.2 is a production-grade Node.js backend starter CLI that scaffolds enterprise-ready Express APIs with first-class TypeScript or JavaScript support, centralized error handling, Zod validation, structured logging, optional JWT authentication, **auto-generated Swagger documentation**, and a revolutionary repository pattern for database abstraction.**
+> **Charcole v2.3 is a production-grade Node.js backend starter CLI that scaffolds enterprise-ready Express APIs with first-class TypeScript or JavaScript support, centralized error handling, Zod validation, structured logging, optional JWT authentication, **auto-generated Swagger documentation**, **optional payment processing (Stripe & LemonSqueezy)**, and a revolutionary repository pattern for database abstraction.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express-4.18+-blue.svg)](https://expressjs.com/)
@@ -8,9 +8,25 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
 
-## What's New in v2.2
+## What's New in v2.3
 
-### 🎯 Auto-Generated Swagger Documentation (@charcoles/swagger)
+### 💳 Payment Processing Module (@charcoles/payments)
+
+Professional payment processing integrated directly into Charcole projects:
+
+- **Stripe adapter** - Full payment intent lifecycle (create, refund, status, webhook verification)
+- **LemonSqueezy adapter** - Perfect for Pakistani developers (Stripe doesn't support PKR payouts; LemonSqueezy provides merchant-of-record payments with full Pakistani bank payout support)
+- **Adapter pattern** - Switch between Stripe and LemonSqueezy via `PAYMENT_PROVIDER` environment variable
+- **Optional module** - Include/exclude during project creation with provider selection
+- **Webhook handling** - Secure webhook event processing with signature verification
+- **Full APIs included** - Four production-ready endpoints:
+  - `POST /api/payments/create-intent` - Create Stripe PaymentIntent or LemonSqueezy checkout session
+  - `POST /api/payments/refund` - Full or partial refunds
+  - `GET /api/payments/status/:paymentId` - Normalized payment status across providers
+  - `POST /api/payments/webhook` - Secure webhook event handling
+- **Standalone package** - Use `@charcoles/payments` in any Express.js project
+
+### Previous: Auto-Generated Swagger Documentation (@charcoles/swagger)
 
 The game-changing feature that eliminates 60-80% of API documentation overhead:
 
@@ -108,6 +124,7 @@ npx create-charcole@latest
 # 1. Language: TypeScript or JavaScript
 # 2. JWT Authentication: Yes/No (includes complete auth system)
 # 3. Swagger Documentation: Yes/No (auto-generated from Zod schemas)
+# 4. Payment Processing: Yes/No (Stripe, LemonSqueezy, or Both)
 
 # Configure environment
 cp .env.example .env
@@ -173,9 +190,76 @@ setupSwagger(app, {
 
 **See complete guide:** `src/lib/swagger/SWAGGER_GUIDE.md` (when swagger is enabled)
 
-> Payment routes such as `/api/payments/create-intent`, `/api/payments/refund`, `/api/payments/status/{paymentId}`, and `/api/payments/webhook` are documented using route-level `@swagger` comments and Zod schemas.
-> For webhook routes, mount raw JSON middleware before `express.json()`:
-> `app.use('/payments/webhook', express.raw({ type: 'application/json' }))`
+## Payment Processing: Drop-in Payments for Any Provider
+
+### The Problem
+
+Payment integration typically requires:
+
+- Complex Stripe/payment provider setup
+- Different APIs for different providers
+- Manual webhook handling
+- Difficult provider switching
+
+### The Solution
+
+Charcole's payment module abstracts payment providers:
+
+```javascript
+// Switch providers with one environment variable
+PAYMENT_PROVIDER=stripe    // Uses Stripe
+PAYMENT_PROVIDER=lemonsqueezy  // Uses LemonSqueezy
+
+// Same API regardless of provider
+POST /api/payments/create-intent
+POST /api/payments/refund
+GET  /api/payments/status/:paymentId
+POST /api/payments/webhook
+```
+
+### Why Two Providers?
+
+**For Pakistani Developers:**
+
+- ❌ Stripe - Does NOT support PKR payouts to Pakistani bank accounts
+- ✅ LemonSqueezy - Merchant-of-record platform with full Pakistani bank payout support
+
+**For Global Developers:**
+
+- ✅ Stripe - Industry standard with global support
+- ✅ LemonSqueezy - Alternative with regional payment solutions
+
+### Setup
+
+1. **During project creation:**
+
+   ```bash
+   npx create-charcole@latest my-api
+   # Select payment processing: Yes → Choose Stripe/LemonSqueezy/Both
+   ```
+
+2. **For existing projects:**
+
+   ```bash
+   npm install @charcoles/payments
+   ```
+
+3. **Configure environment:**
+   ```env
+   PAYMENT_PROVIDER=stripe  # or lemonsqueezy
+   STRIPE_SECRET_KEY=sk_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   LEMONSQUEEZY_API_KEY=...
+   LEMONSQUEEZY_WEBHOOK_SECRET=...
+   ```
+
+### Payment routes
+
+Payment endpoints are automatically documented with Swagger when enabled:
+
+- Routes: `/api/payments/create-intent`, `/api/payments/refund`, `/api/payments/status/{paymentId}`, `/api/payments/webhook`
+- All routes use route-level `@swagger` comments and Zod schemas
+- For webhook routes, raw JSON middleware is auto-configured: `app.use('/payments/webhook', express.raw({ type: 'application/json' }))`
 
 ## Repository Pattern: A Game Changer
 

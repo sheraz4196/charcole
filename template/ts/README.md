@@ -9,11 +9,12 @@ Welcome! This guide will help you set up and start using the Charcole API framew
 3. [Configuration](#configuration)
 4. [Creating Your First Endpoint](#creating-your-first-endpoint)
 5. [API Documentation with Swagger](#api-documentation-with-swagger)
-6. [Error Handling](#error-handling)
-7. [Validation](#validation)
-8. [Logging](#logging)
-9. [Running Your API](#running-your-api)
-10. [Troubleshooting](#troubleshooting)
+6. [Payment Processing (if enabled)](#payment-processing-if-enabled)
+7. [Error Handling](#error-handling)
+8. [Validation](#validation)
+9. [Logging](#logging)
+10. [Running Your API](#running-your-api)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -520,6 +521,135 @@ For protected endpoints:
 1. Click the "Authorize" button at the top
 2. Enter your JWT token
 3. Now you can test protected endpoints
+
+---
+
+## 💳 Payment Processing (if enabled)
+
+### Overview
+
+Your API comes with **production-ready payment processing** if you selected the payments module during setup. Choose between:
+
+- **Stripe** - Industry standard payment processing
+- **LemonSqueezy** - Perfect for Pakistani developers (PKR payout support via bank transfer)
+- **Both** - Flexibility to switch providers
+
+### Payment Endpoints
+
+Four ready-to-use payment APIs are auto-configured:
+
+```
+POST   /api/payments/create-intent       # Create payment intent
+POST   /api/payments/refund              # Refund a payment
+GET    /api/payments/status/:paymentId   # Check payment status
+POST   /api/payments/webhook             # Webhook receiver
+```
+
+### Configuration
+
+Add payment provider credentials to `.env`:
+
+```env
+# Payment Provider (stripe, lemonsqueezy, or both)
+PAYMENT_PROVIDER=stripe
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# LemonSqueezy Configuration
+LEMONSQUEEZY_API_KEY=...
+LEMONSQUEEZY_WEBHOOK_SECRET=...
+```
+
+### Usage Example
+
+```typescript
+import { setupPayments } from "@charcoles/payments";
+
+// In your app.ts
+const paymentAdapter = setupPayments({
+  provider: process.env.PAYMENT_PROVIDER,
+  stripeKey: process.env.STRIPE_SECRET_KEY,
+  lemonsqueezyKey: process.env.LEMONSQUEEZY_API_KEY,
+});
+
+// In your controller
+export const createPaymentIntent = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { amount, currency, customerId } = req.body;
+
+    const intent = await paymentAdapter.createPayment({
+      amount,
+      currency,
+      customerId,
+    });
+
+    sendSuccess(res, intent, 201, "Payment intent created");
+  },
+);
+```
+
+### Webhook Handling
+
+Webhooks are automatically configured and validated:
+
+```typescript
+// src/modules/payments/payments.routes.ts
+// POST /api/payments/webhook automatically handles:
+// - Stripe: payment_intent.succeeded, charge.refunded
+// - LemonSqueezy: order_created, order_refunded
+
+// Raw body middleware auto-configured in app.ts
+// app.use('/payments/webhook', express.raw({ type: 'application/json' }))
+```
+
+### Error Handling
+
+Payment errors are automatically caught by the global error handler:
+
+```typescript
+import { PaymentError } from "@charcoles/payments";
+
+// Throws structured error
+throw new PaymentError("Insufficient funds", {
+  code: "insufficient_funds",
+  statusCode: 402,
+});
+
+// Response:
+// {
+//   "success": false,
+//   "message": "Insufficient funds",
+//   "statusCode": 402,
+//   "code": "insufficient_funds"
+// }
+```
+
+### Testing Payments Locally
+
+**Stripe:**
+
+```bash
+STRIPE_SECRET_KEY=sk_test_... npm run dev
+# Use test card: 4242 4242 4242 4242
+```
+
+**LemonSqueezy:**
+
+```bash
+LEMONSQUEEZY_API_KEY=... npm run dev
+# Sandbox mode automatically used with test keys
+```
+
+### Documentation in Swagger
+
+All payment endpoints are automatically documented in Swagger UI when enabled:
+
+1. Start server: `npm run dev`
+2. Visit http://localhost:3000/api-docs
+3. Look for **Payments** tag
+4. Test all endpoints directly from the browser
 
 ---
 
