@@ -5,9 +5,40 @@ All notable changes to Charcole will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.2] – 2026-02-06
+## [2.3.0] – 2026-05-05
 
-### 🎉 Major Release: Auto-Generated Swagger Documentation
+### Added
+
+- **Payments module** — optional, production-ready payment processing for scaffolded projects
+- `@charcoles/payments` standalone npm package — drop-in payment support for any Express app
+- **Stripe adapter** — full payment intent lifecycle: create, refund, status check, webhook verification
+- **LemonSqueezy adapter** — checkout sessions, order retrieval, refunds, and webhook HMAC verification
+  - Added specifically for Pakistani developers: Stripe does not support PKR payouts; LemonSqueezy provides merchant-of-record payments with full Pakistani bank payout support
+- Adapter pattern for provider abstraction — switch between Stripe and LemonSqueezy via `PAYMENT_PROVIDER` env var
+- New CLI prompt: "Include payments module?" with provider selection (Stripe / LemonSqueezy / Both)
+- `src/modules/payments/` module in both JS and TS templates with:
+  - `payments.adapter.js/ts` — provider factory with singleton caching
+  - `payments.service.js/ts` — service layer with in-memory webhook deduplication
+  - `payments.controller.js/ts` — request handlers for all 4 endpoints
+  - `payments.routes.js/ts` — Express router with Swagger JSDoc comments
+  - `payments.schemas.js/ts` — Zod validation schemas for all request bodies
+  - `payments.constants.js/ts` — provider names, event names, webhook header names
+- Four new API endpoints in scaffolded projects:
+  - `POST /payments/create-intent` — create Stripe PaymentIntent or LemonSqueezy checkout session
+  - `POST /payments/refund` — full or partial refunds
+  - `GET /payments/status/:paymentId` — normalized payment status across providers
+  - `POST /payments/webhook` — secure webhook event handling with signature verification
+- Webhook raw body middleware auto-configured in `app.js` when payments module is selected
+- Conditional route loading for payments (same `existsSync` pattern as auth and swagger)
+- Payment env vars added to Zod env schema in both templates (all optional)
+- Payment section added to `.env.example` in both templates with inline documentation
+- Swagger JSDoc comments on all 4 payment endpoints
+- `## Payments Module` section added to `SWAGGER_GUIDE.md` in both templates
+- Payments section added to root `README.md` including migration guide for existing projects
+- Integration tests for payments controller, service, schemas, and routes in both JS and TS templates
+- `PaymentError` custom error class with `code` and `statusCode` fields, compatible with existing error handler
+
+## [2.2.2] – 2026-02-06
 
 #### ✨ **New Features**
 
