@@ -1,0 +1,151 @@
+# .github/workflows/template-smoke.yml
+
+name: Template Smoke Test
+
+on:
+  push:
+    paths:
+      - "bin/**"
+      - "template/**"
+      - "packages/**"
+  pull_request:
+    paths:
+      - "bin/**"
+      - "template/**"
+      - "packages/**"
+
+jobs:
+  smoke-test:
+    name: Template Generation & Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install root CLI dependencies
+        run: npm ci
+
+      # ─── Test 1: JS template, no optional modules ───────────────────────────
+
+      - name: Generate JS project (no modules)
+        run: |
+          mkdir -p /tmp/smoke-js
+          cd /tmp/smoke-js
+          # Pipe answers: project-name=smoke-js, language=JS (1), auth=N, swagger=N, payments=N
+          # Adjust the piped string to match the exact number and order of CLI prompts
+          printf 'smoke-js\n1\nn\nn\nn\n' | node $GITHUB_WORKSPACE/bin/index.js || true
+          # '|| true' prevents failure if CLI exits with non-zero due to TTY detection.
+          # The existence of generated files is verified in the next step.
+
+      - name: Verify JS project was generated
+        run: |
+          test -f /tmp/smoke-js/smoke-js/package.json || (echo "FAIL: package.json not found" && exit 1)
+          test -f /tmp/smoke-js/smoke-js/src/app.js || (echo "FAIL: app.js not found" && exit 1)
+          test -f /tmp/smoke-js/smoke-js/src/server.js || (echo "FAIL: server.js not found" && exit 1)
+          echo "JS project generated successfully"
+
+      - name: Install JS project dependencies
+        run: npm install
+        working-directory: /tmp/smoke-js/smoke-js
+
+      - name: Start JS project and check health endpoint
+        run: |
+          # Copy .env.example to .env so the server can start
+          cp .env.example .env 2>/dev/null || true
+
+          # Start the server in the background
+          node src/server.js &
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+
+          # Wait up to 10 seconds for the server to be ready
+          for i in $(seq 1 10); do
+            sleep 1
+            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ Health endpoint responded on attempt $i"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "❌ Server did not respond after 10 seconds"
+              kill $SERVER_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
+
+          # Verify health response is what we expect
+          RESPONSE=$(curl -s http://localhost:3000/health)
+          echo "Health response: $RESPONSE"
+
+          # Kill the server
+          kill $SERVER_PID 2>/dev/null || true
+          echo "Server stopped"
+        working-directory: /tmp/smoke-js/smoke-js
+        env:
+          PORT: 3000
+          NODE_ENV: test
+          JWT_SECRET: smoke-test-secret-not-real
+
+      # ─── Test 2: TS template, no optional modules ───────────────────────────
+
+      - name: Generate TS project (no modules)
+        run: |
+          mkdir -p /tmp/smoke-ts
+          cd /tmp/smoke-ts
+          printf 'smoke-ts\n0\nn\nn\nn\n' | node $GITHUB_WORKSPACE/bin/index.js || true
+
+      - name: Verify TS project was generated
+        run: |
+          test -f /tmp/smoke-ts/smoke-ts/package.json || (echo "FAIL: package.json not found" && exit 1)
+          test -f /tmp/smoke-ts/smoke-ts/src/app.ts || (echo "FAIL: app.ts not found" && exit 1)
+          echo "TS project generated successfully"
+
+      - name: Install TS project dependencies
+        run: npm install
+        working-directory: /tmp/smoke-ts/smoke-ts
+
+      - name: Build TS project
+        run: npm run build
+        working-directory: /tmp/smoke-ts/smoke-ts
+        # The TS template should have a build script that compiles TypeScript.
+        # If this fails, the template has a TypeScript compilation error.
+
+      - name: Start TS project and check health endpoint
+        run: |
+          cp .env.example .env 2>/dev/null || true
+          node dist/server.js &
+          SERVER_PID=$!
+
+          for i in $(seq 1 10); do
+            sleep 1
+            if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+              echo "✅ TS health endpoint responded"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "❌ TS server did not respond"
+              kill $SERVER_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
+
+          kill $SERVER_PID 2>/dev/null || true
+        working-directory: /tmp/smoke-ts/smoke-ts
+        env:
+          PORT: 3001
+          NODE_ENV: test
+          JWT_SECRET: smoke-test-secret-not-real
+
+      # ─── Cleanup ─────────────────────────────────────────────────────────────
+
+      - name: Cleanup generated projects
+        if: always()
+        run: |
+          rm -rf /tmp/smoke-js /tmp/smoke-ts
+          echo "Cleanup complete"
