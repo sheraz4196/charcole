@@ -1,0 +1,48 @@
+# .github/workflows/stale.yml
+
+name: Stale Issue and PR Management
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  # Can also be triggered manually for immediate cleanup:
+  workflow_dispatch:
+
+jobs:
+  stale:
+    name: Handle Stale Issues and PRs
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Mark and close stale issues and PRs
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Issues
+          days-before-issue-stale: 30
+          days-before-issue-close: 7
+          stale-issue-label: "stale"
+          close-issue-label: "closed-stale"
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has not had recent activity. It will be closed in 7 days if no further activity occurs.
+          close-issue-message: |
+            This issue was closed because it has been inactive for 37 days (30 days stale + 7 days to close). If you believe this issue should be reopened, please provide additional context or updates.
+          exempt-issue-labels: "pinned,security,in-progress"
+          # Pull Requests
+          days-before-pr-stale: 14
+          days-before-pr-close: 7
+          stale-pr-label: "stale"
+          close-pr-label: "closed-stale"
+          stale-pr-message: |
+            This pull request has been automatically marked as stale because it has not had recent activity. It will be closed in 7 days if no further activity occurs.
+          close-pr-message: |
+            This pull request was closed because it has been inactive for 21 days (14 days stale + 7 days to close). If you believe this PR should be reopened, please provide additional context or updates.
+          exempt-pr-labels: "pinned,security,in-progress,do-not-close"
+          # General settings
+          operations-per-run: 50
+          ascending: true
+          delete-branch: false
