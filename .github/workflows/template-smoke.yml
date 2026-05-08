@@ -140,12 +140,54 @@ jobs:
         env:
           PORT: 3001
           NODE_ENV: test
+      # ─── Test 3: JS template with auth, swagger, and payments ───────────────
+
+      - name: Generate JS project (with modules)
+        run: |
+          mkdir -p /tmp/smoke-js-full
+          cd /tmp/smoke-js-full
+          printf 'smoke-js-full\n1\ny\ny\ny\n0\n' | node $GITHUB_WORKSPACE/bin/index.js || true
+
+      - name: Verify JS full project was generated
+        run: |
+          test -f /tmp/smoke-js-full/smoke-js-full/package.json || (echo "FAIL: package.json not found" && exit 1)
+          echo "JS full project generated successfully"
+
+      - name: Install JS full project dependencies
+        run: npm install
+        working-directory: /tmp/smoke-js-full/smoke-js-full
+
+      - name: Start JS full project and check health endpoint
+        run: |
+          cp .env.example .env 2>/dev/null || true
+          node src/server.js &
+          SERVER_PID=$!
+
+          for i in $(seq 1 10); do
+            sleep 1
+            if curl -sf http://localhost:3002/health > /dev/null 2>&1; then
+              echo "✅ JS full health endpoint responded"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "❌ JS full server did not respond"
+              kill $SERVER_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
+
+          kill $SERVER_PID 2>/dev/null || true
+        working-directory: /tmp/smoke-js-full/smoke-js-full
+        env:
+          PORT: 3002
+          NODE_ENV: test
           JWT_SECRET: smoke-test-secret-not-real
+          STRIPE_SECRET_KEY: sk_test_fake_key_for_smoke_test
 
       # ─── Cleanup ─────────────────────────────────────────────────────────────
 
       - name: Cleanup generated projects
         if: always()
         run: |
-          rm -rf /tmp/smoke-js /tmp/smoke-ts
+          rm -rf /tmp/smoke-js /tmp/smoke-ts /tmp/smoke-js-full
           echo "Cleanup complete"

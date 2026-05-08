@@ -38,3 +38,16 @@ jobs:
             swagger
             deps
             auth
+          requireScope: false
+          # requireScope: false — scope is encouraged but not enforced.
+          # Change to true if you want to mandate scopes.
+
+          subjectPattern: ^[a-z].+[^.]$
+          # subjectPattern enforces:
+          # - starts with lowercase letter
+          # - ends without a period
+          # Example: "feat: add payments" ✅
+          # Example: "feat: Add payments." ❌ (capital A, ends with period)
+
+          subjectPatternError: |
+            The subject "{subject}" does not match the required format.
