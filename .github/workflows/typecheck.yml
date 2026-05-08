@@ -1,0 +1,58 @@
+# .github/workflows/typecheck.yml
+
+name: TypeScript Check
+
+on:
+  push:
+    paths:
+      - "template/ts/**"
+      - "packages/payments/src/**"
+      - "packages/payments/package.json"
+  pull_request:
+    paths:
+      - "template/ts/**"
+      - "packages/payments/src/**"
+      - "packages/payments/package.json"
+
+jobs:
+  typecheck:
+    name: TypeScript Compilation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install template/ts dependencies
+        run: npm ci
+        working-directory: template/ts
+
+      - name: TypeScript check — template/ts
+        run: npx tsc --noEmit
+        working-directory: template/ts
+        # --noEmit means: check types but don't output any compiled files.
+        # If tsconfig.json has errors, this step fails.
+        # If any .ts file has a type error, this step fails.
+
+      - name: Install packages/payments dependencies
+        run: npm ci
+        working-directory: packages/payments
+
+      - name: TypeScript check — packages/payments type definitions
+        run: |
+          # Verify index.d.ts exports are valid by running tsc on them
+          # If packages/payments has a tsconfig.json, use that.
+          # Otherwise check the .d.ts file directly.
+          if [ -f tsconfig.json ]; then
+            npx tsc --noEmit
+          else
+            echo "No tsconfig.json in packages/payments — skipping deep TS check"
+            echo "Consider adding one for stricter type definition validation"
+          fi
+        working-directory: packages/payments

@@ -1,0 +1,60 @@
+# .github/workflows/audit.yml
+
+name: Dependency Security Audit
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1"
+
+jobs:
+  audit:
+    name: npm audit — ${{ matrix.package }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package:
+          - root
+          - packages/swagger
+          - packages/payments
+      fail-fast: false
+      # fail-fast: false — audit all packages even if one fails.
+      # You want the full picture of what's vulnerable, not just the first hit.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Determine working directory
+        id: workdir
+        run: |
+          if [ "${{ matrix.package }}" = "root" ]; then
+            echo "path=." >> $GITHUB_OUTPUT
+          else
+            echo "path=${{ matrix.package }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ steps.workdir.outputs.path }}
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+        working-directory: ${{ steps.workdir.outputs.path }}
+        # --audit-level=high means:
+        # - low severity → pass (acceptable risk)
+        # - moderate severity → pass (acceptable risk, review manually)
+        # - high severity → FAIL (must be fixed)
+        # - critical severity → FAIL (must be fixed immediately)
+        #
+        # Change to --audit-level=moderate for stricter checking.
+        # Change to --audit-level=critical if you only want to block on critical.

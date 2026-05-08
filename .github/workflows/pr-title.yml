@@ -1,0 +1,53 @@
+name: PR Title Lint
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  lint-pr-title:
+    name: Validate PR Title Format
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+
+    steps:
+      - name: Check PR title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            test
+            refactor
+            perf
+            ci
+            build
+          scopes: |
+            cli
+            template
+            payments
+            swagger
+            deps
+            auth
+          requireScope: false
+          # requireScope: false — scope is encouraged but not enforced.
+          # Change to true if you want to mandate scopes.
+
+          subjectPattern: ^[a-z].+[^.]$
+          # subjectPattern enforces:
+          # - starts with lowercase letter
+          # - ends without a period
+          # Example: "feat: add payments" ✅
+          # Example: "feat: Add payments." ❌ (capital A, ends with period)
+
+          subjectPatternError: |
+            The subject "{subject}" does not match the required format.

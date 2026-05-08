@@ -1,0 +1,137 @@
+name: Weekly Maintenance
+
+on:
+  schedule:
+    # Every Monday at 08:00 UTC
+    # Adjust the hour to match your timezone if you want it earlier/later in your day.
+    # Pakistan Standard Time (PKT) is UTC+5, so 08:00 UTC = 13:00 PKT.
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+    # Allows manual trigger from the GitHub Actions tab.
+    # Useful when you want to run maintenance outside the Monday schedule,
+    # for example after a major release to immediately catch any dep drift.
+
+jobs:
+  maintenance:
+    name: Update Dependencies & Open PR
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      # contents: write — needed to push the new branch to the repo
+      pull-requests: write
+      # pull-requests: write — needed to open the PR and request a reviewer
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set today's date
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Generate branch name with today's date
+        id: branch
+        run: echo "branch=chore/weekly-maintenance-${{ steps.date.outputs.date }}" >> $GITHUB_OUTPUT
+
+      - name: Check if maintenance branch already exists
+        id: branch_check
+        run: |
+          if git ls-remote --heads origin "chore/weekly-maintenance-${{ steps.date.outputs.date }}" | grep -q .; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and switch to maintenance branch
+        if: steps.branch_check.outputs.exists == 'false'
+        run: git checkout -b ${{ steps.branch.outputs.branch }}
+
+      - name: Update dependencies in root package
+        if: steps.branch_check.outputs.exists == 'false'
+        run: npm update
+
+      - name: Update dependencies in packages/swagger
+        if: steps.branch_check.outputs.exists == 'false'
+        working-directory: packages/swagger
+        run: npm update
+
+      - name: Update dependencies in packages/payments
+        if: steps.branch_check.outputs.exists == 'false'
+        working-directory: packages/payments
+        run: npm update
+
+      - name: Run tests in root package
+        if: steps.branch_check.outputs.exists == 'false'
+        run: npm run test:run
+
+      - name: Run tests in packages/swagger
+        if: steps.branch_check.outputs.exists == 'false'
+        working-directory: packages/swagger
+        run: npm run test:run
+
+      - name: Run tests in packages/payments
+        if: steps.branch_check.outputs.exists == 'false'
+        working-directory: packages/payments
+        run: npm run test:run
+
+      - name: Check for changes
+        id: changes
+        if: steps.branch_check.outputs.exists == 'false'
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes if any
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add package-lock.json packages/*/package-lock.json
+          git commit -m "chore(deps): weekly dependency updates ${{ steps.date.outputs.date }}"
+
+      - name: Push branch to GitHub
+        if: steps.changes.outputs.has_changes == 'true'
+        run: git push origin ${{ steps.branch.outputs.branch }}
+
+      - name: Create pull request
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch.outputs.branch }}
+          title: "chore(deps): weekly dependency updates ${{ steps.date.outputs.date }}"
+          body: |
+            ## Weekly Dependency Updates — ${{ steps.date.outputs.date }}
+
+            This PR updates all npm dependencies across the root package and sub-packages to their latest compatible versions within the existing semver ranges.
+
+            ### Changes Made
+
+            - Updated dependencies in root package
+            - Updated dependencies in `packages/swagger`
+            - Updated dependencies in `packages/payments`
+
+            ### Verification
+
+            ✅ All test suites passed after the updates. This PR is safe to merge.
+
+            ### Files Changed
+
+            Only `package-lock.json` files have been updated. No source code changes.
+          assignees: sheraz4196
+          reviewers: sheraz4196
+          labels: dependencies
+
+      - name: Summary when no changes
+        if: steps.changes.outputs.has_changes == 'false'
+        run: echo "All packages are already on the latest versions. No PR opened."
