@@ -26,6 +26,7 @@
   "homepage": "https://www.charcole.site/guides/swagger/introduction",
   "scripts": {
     "test": "echo \"No tests yet\" && exit 0",
+    "test:run": "vitest run",
     "prepare": "echo 'Ready for npm link'"
   },
   "dependencies": {

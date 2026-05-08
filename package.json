@@ -38,5 +38,8 @@
   },
   "dependencies": {
     "prompts": "^2.4.2"
+  },
+  "scripts": {
+    "test:run": "echo 'No root tests' && exit 0"
   }
 }

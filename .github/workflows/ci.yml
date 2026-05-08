@@ -1,0 +1,67 @@
+# .github/workflows/ci.yml
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+      fail-fast: false
+      # fail-fast: false means both Node versions run even if one fails.
+      # This gives you full picture of failures across versions.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          # cache: 'npm' caches node_modules between runs using package-lock.json hash.
+          # Speeds up workflow significantly on repeat runs.
+
+      - name: Install root dependencies
+        run: npm ci
+        # npm ci is preferred over npm install in CI:
+        # - respects package-lock.json exactly
+        # - fails if lock file is out of sync
+        # - never modifies package-lock.json
+
+      - name: Install @charcoles/swagger dependencies
+        run: npm ci
+        working-directory: packages/swagger
+
+      - name: Install @charcoles/payments dependencies
+        run: npm ci
+        working-directory: packages/payments
+
+      - name: Run root tests
+        run: npm run test:run
+        # test:run is the non-watch Vitest command.
+        # If no tests exist at root level, add this to root package.json:
+        # "test:run": "echo 'No root tests' && exit 0"
+
+      - name: Run @charcoles/swagger tests
+        run: npm run test:run
+        working-directory: packages/swagger
+
+      - name: Run @charcoles/payments tests
+        run: npm run test:run
+        working-directory: packages/payments
+
+      - name: Check for lint issues
+        run: npm run lint --if-present
+        # --if-present skips this step gracefully if no lint script exists.
+        # When you add ESLint later, it will automatically start running here.
