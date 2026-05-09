@@ -87,6 +87,7 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
     // Check if project name is provided as command line argument
     const args = process.argv.slice(2);
     let projectNameFromArgs = null;
+    let preset = null;
 
     if (args.length > 0) {
       // The first argument that doesn't start with '-' is likely the project name
@@ -94,6 +95,43 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
         if (!arg.startsWith("-")) {
           projectNameFromArgs = arg;
           break;
+        }
+      }
+
+      const presetArgIndex = args.findIndex(
+        (arg) => arg === "--preset" || arg.startsWith("--preset=")
+      );
+
+      if (presetArgIndex !== -1) {
+        let presetValue = null;
+        const presetArg = args[presetArgIndex];
+
+        if (presetArg === "--preset") {
+          presetValue = args[presetArgIndex + 1];
+          if (!presetValue) {
+            console.error("❌ --preset requires a JSON string or file path");
+            process.exit(1);
+          }
+        } else {
+          presetValue = presetArg.slice("--preset=".length);
+        }
+
+        try {
+          if (presetValue.trim().startsWith("{")) {
+            preset = JSON.parse(presetValue);
+          } else {
+            const presetPath = path.isAbsolute(presetValue)
+              ? presetValue
+              : path.join(process.cwd(), presetValue);
+            preset = JSON.parse(fs.readFileSync(presetPath, "utf-8"));
+          }
+        } catch (err) {
+          console.error("❌ Failed to parse --preset:", err.message);
+          process.exit(1);
+        }
+
+        if (preset.projectName) {
+          projectNameFromArgs = preset.projectName;
         }
       }
     }
@@ -151,7 +189,20 @@ function copyDirRecursive(src, dest, excludeFiles = [], excludeDirs = []) {
       },
     );
 
-    const responses = await prompts(questions);
+    let responses;
+
+    if (preset) {
+      responses = {
+        projectName: preset.projectName,
+        language: preset.language,
+        auth: preset.auth,
+        swagger: preset.swagger,
+        includePayments: preset.includePayments,
+        paymentProvider: preset.paymentProvider || "stripe",
+      };
+    } else {
+      responses = await prompts(questions);
+    }
 
     // Use command line project name if provided, otherwise use prompt response
     const projectName = projectNameFromArgs || responses.projectName;
