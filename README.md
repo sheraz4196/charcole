@@ -399,7 +399,7 @@ GET  /api/protected/me     # Get current user (protected)
    // ❌ Never duplicate in JSDoc
    ```
 
-## Why Choose Charcole v2.2?
+## Why Choose Charcole v2.3?
 
 ### For Startups
 
