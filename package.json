@@ -40,6 +40,19 @@
     "prompts": "^2.4.2"
   },
   "scripts": {
-    "test:run": "echo 'No root tests' && exit 0"
+    "test:run": "echo 'No root tests' && exit 0",
+    "prepare": "husky",
+    "lint:commits": "commitlint --from HEAD~1 --to HEAD",
+    "lint:staged": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,ts}": "node --check",
+    "package*.json": "node -e \"JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))\" --"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5"
   }
 }

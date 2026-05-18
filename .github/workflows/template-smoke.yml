@@ -38,11 +38,7 @@ jobs:
         run: |
           mkdir -p /tmp/smoke-js
           cd /tmp/smoke-js
-          # Pipe answers: project-name=smoke-js, language=JS (1), auth=N, swagger=N, payments=N
-          # Adjust the piped string to match the exact number and order of CLI prompts
-          printf 'smoke-js\n1\nn\nn\nn\n' | node $GITHUB_WORKSPACE/bin/index.js || true
-          # '|| true' prevents failure if CLI exits with non-zero due to TTY detection.
-          # The existence of generated files is verified in the next step.
+          node $GITHUB_WORKSPACE/bin/index.js --preset '{"projectName":"smoke-js","language":"js","auth":false,"swagger":false,"includePayments":false}'
 
       - name: Verify JS project was generated
         run: |
@@ -98,7 +94,7 @@ jobs:
         run: |
           mkdir -p /tmp/smoke-ts
           cd /tmp/smoke-ts
-          printf 'smoke-ts\n0\nn\nn\nn\n' | node $GITHUB_WORKSPACE/bin/index.js || true
+          node $GITHUB_WORKSPACE/bin/index.js --preset '{"projectName":"smoke-ts","language":"ts","auth":false,"swagger":false,"includePayments":false}'
 
       - name: Verify TS project was generated
         run: |
@@ -146,7 +142,7 @@ jobs:
         run: |
           mkdir -p /tmp/smoke-js-full
           cd /tmp/smoke-js-full
-          printf 'smoke-js-full\n1\ny\ny\ny\n0\n' | node $GITHUB_WORKSPACE/bin/index.js || true
+          node $GITHUB_WORKSPACE/bin/index.js --preset '{"projectName":"smoke-js-full","language":"js","auth":true,"swagger":true,"includePayments":true,"paymentProvider":"stripe"}'
 
       - name: Verify JS full project was generated
         run: |

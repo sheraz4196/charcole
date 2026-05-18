@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock adapters before importing the service so mocks are spy-able constructors
+vi.mock("../adapters/StripeAdapter.js", () => {
+  return { StripeAdapter: vi.fn() };
+});
+vi.mock("../adapters/LemonSqueezyAdapter.js", () => {
+  return { LemonSqueezyAdapter: vi.fn() };
+});
+
 import * as paymentsService from "../services/payments.service.js";
 import { PaymentError } from "../errors/PaymentError.js";
-
-vi.mock("../adapters/StripeAdapter.js");
-vi.mock("../adapters/LemonSqueezyAdapter.js");
 
 describe("payments.service", () => {
   beforeEach(() => {
