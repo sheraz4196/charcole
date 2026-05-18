@@ -93,25 +93,25 @@ Use hyphens, not underscores or spaces. Keep it short and descriptive.
 
 ### Allowed types
 
-| Type | When to use |
-|---|---|
-| `feat/` | You're adding a new feature |
-| `fix/` | You're fixing a bug |
-| `chore/` | Maintenance: deps, config, cleanup |
-| `docs/` | Documentation only changes |
-| `test/` | Adding or fixing tests |
-| `refactor/` | Code restructuring, no behavior change |
-| `hotfix/` | Urgent fix for a critical production issue |
-| `release/` | Version bump and release preparation |
-| `perf/` | Performance improvements |
-| `ci/` | Changes to GitHub Actions workflows |
-| `build/` | Build tooling changes |
+| Type        | When to use                                |
+| ----------- | ------------------------------------------ |
+| `feat/`     | You're adding a new feature                |
+| `fix/`      | You're fixing a bug                        |
+| `chore/`    | Maintenance: deps, config, cleanup         |
+| `docs/`     | Documentation only changes                 |
+| `test/`     | Adding or fixing tests                     |
+| `refactor/` | Code restructuring, no behavior change     |
+| `hotfix/`   | Urgent fix for a critical production issue |
+| `release/`  | Version bump and release preparation       |
+| `perf/`     | Performance improvements                   |
+| `ci/`       | Changes to GitHub Actions workflows        |
+| `build/`    | Build tooling changes                      |
 
 ### Reserved branches
 
-| Branch | Purpose |
-|---|---|
-| `main` | Production-ready code only. Never commit directly. |
+| Branch    | Purpose                                              |
+| --------- | ---------------------------------------------------- |
+| `main`    | Production-ready code only. Never commit directly.   |
 | `develop` | Integration branch (if used). PRs target this first. |
 
 ### Examples
@@ -161,35 +161,35 @@ footer (optional)
 
 ### Types
 
-| Type | When to use |
-|---|---|
-| `feat` | New feature added |
-| `fix` | Bug fixed |
-| `docs` | Documentation only |
-| `chore` | Maintenance, deps, config — no production code |
-| `test` | Tests added or fixed |
-| `refactor` | Code restructured, no behavior change |
-| `perf` | Performance improved |
-| `ci` | CI/CD pipeline changes |
-| `build` | Build system changes |
-| `revert` | Reverts a previous commit |
+| Type       | When to use                                    |
+| ---------- | ---------------------------------------------- |
+| `feat`     | New feature added                              |
+| `fix`      | Bug fixed                                      |
+| `docs`     | Documentation only                             |
+| `chore`    | Maintenance, deps, config — no production code |
+| `test`     | Tests added or fixed                           |
+| `refactor` | Code restructured, no behavior change          |
+| `perf`     | Performance improved                           |
+| `ci`       | CI/CD pipeline changes                         |
+| `build`    | Build system changes                           |
+| `revert`   | Reverts a previous commit                      |
 
 ### Scopes (optional but encouraged)
 
 Scopes tell reviewers which part of the project changed:
 
-| Scope | Area |
-|---|---|
-| `cli` | `bin/index.js` or `bin/lib/` |
+| Scope      | Area                             |
+| ---------- | -------------------------------- |
+| `cli`      | `bin/index.js` or `bin/lib/`     |
 | `template` | `template/js/` or `template/ts/` |
-| `payments` | `packages/payments/` |
-| `swagger` | `packages/swagger/` |
-| `auth` | Auth module |
-| `deps` | Dependency updates |
-| `ci` | GitHub Actions workflows |
-| `docs` | Documentation files |
-| `tests` | Test files |
-| `release` | Version bump and release prep |
+| `payments` | `packages/payments/`             |
+| `swagger`  | `packages/swagger/`              |
+| `auth`     | Auth module                      |
+| `deps`     | Dependency updates               |
+| `ci`       | GitHub Actions workflows         |
+| `docs`     | Documentation files              |
+| `tests`    | Test files                       |
+| `release`  | Version bump and release prep    |
 
 ### Rules
 
@@ -279,14 +279,14 @@ Charcole has a consistent code style across all files. Match it exactly.
 
 ### Naming conventions
 
-| Thing | Convention | Example |
-|---|---|---|
-| Variables | camelCase | `paymentResult` |
-| Functions | camelCase | `createPayment` |
-| Classes | PascalCase | `StripeAdapter` |
-| Interfaces/Types | PascalCase | `PaymentAdapter` |
-| Constants | UPPER_CASE | `PAYMENT_PROVIDER` |
-| Files | kebab-case or dot.separated | `payments.service.js` |
+| Thing            | Convention                  | Example               |
+| ---------------- | --------------------------- | --------------------- |
+| Variables        | camelCase                   | `paymentResult`       |
+| Functions        | camelCase                   | `createPayment`       |
+| Classes          | PascalCase                  | `StripeAdapter`       |
+| Interfaces/Types | PascalCase                  | `PaymentAdapter`      |
+| Constants        | UPPER_CASE                  | `PAYMENT_PROVIDER`    |
+| Files            | kebab-case or dot.separated | `payments.service.js` |
 
 ### Import order
 
@@ -294,22 +294,23 @@ Group imports in this order, separated by a blank line:
 
 ```js
 // 1. Node.js built-ins
-import { createHmac } from 'crypto'
-import { existsSync } from 'fs'
+import { createHmac } from "crypto";
+import { existsSync } from "fs";
 
 // 2. External packages
-import Stripe from 'stripe'
-import { z } from 'zod'
+import Stripe from "stripe";
+import { z } from "zod";
 
 // 3. Internal config and utils
-import { env } from '../../config/env.js'
-import { logger } from '../../utils/logger.js'
+import { env } from "../../config/env.js";
+import { logger } from "../../utils/logger.js";
 
 // 4. Relative imports (same module)
-import { PaymentAdapter } from './PaymentAdapter.js'
+import { PaymentAdapter } from "./PaymentAdapter.js";
 ```
 
 **All internal imports must include `.js` extension** — this is required for ES modules:
+
 ```js
 import { getAdapter } from './payments.adapter.js'   ✅
 import { getAdapter } from './payments.adapter'       ❌
@@ -417,6 +418,7 @@ When you open a PR, fill this out:
 Open a GitHub issue at [github.com/sheraz4196/charcole/issues](https://github.com/sheraz4196/charcole/issues).
 
 Include:
+
 - **Node.js version** — `node --version`
 - **npm version** — `npm --version`
 - **Operating system**
@@ -437,6 +439,7 @@ feat: [your feature idea in one line]
 ```
 
 Explain:
+
 - What problem you're trying to solve
 - How you'd expect it to work from a user perspective
 - Any alternatives you've considered
@@ -453,4 +456,4 @@ Thank you for contributing to Charcole. 🖤
 
 ---
 
-*Full documentation at [charcole.site](https://www.charcole.site/)*
+_Full documentation at [charcole.site](https://www.charcole.site/)_
