@@ -1,0 +1,48 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npx lint-staged
+
+# Check for branch name compliance
+# Extract the current branch name
+BRANCH=$(git symbolic-ref --short HEAD)
+
+# Define the allowed branch name pattern:
+# main, develop, or one of these prefixes followed by a description
+# feat/, fix/, chore/, docs/, test/, refactor/, hotfix/, release/
+PATTERN="^(main|develop|feat|fix|chore|docs|test|refactor|hotfix|release|perf|ci|build)(\/.+)?$"
+
+if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+  echo ""
+  echo "\033[31m✗ BRANCH NAME ERROR\033[0m"
+  echo ""
+  echo "  Current branch: \033[33m$BRANCH\033[0m"
+  echo ""
+  echo "  Branch names must follow this pattern:"
+  echo "  \033[32mmain\033[0m              → the main branch"
+  echo "  \033[32mdevelop\033[0m           → development integration branch"
+  echo "  \033[32mfeat/your-feature\033[0m → new feature work"
+  echo "  \033[32mfix/what-you-fixed\033[0m → bug fixes"
+  echo "  \033[32mchore/what-you-did\033[0m → maintenance work"
+  echo "  \033[32mdocs/what-you-wrote\033[0m → documentation"
+  echo "  \033[32mtest/what-you-tested\033[0m → test additions"
+  echo "  \033[32mrefactor/what-you-changed\033[0m → refactoring"
+  echo "  \033[32mhotfix/critical-fix\033[0m → urgent production fix"
+  echo "  \033[32mrelease/v2.3.0\033[0m → release preparation"
+  echo "  \033[32mperf/improvement\033[0m → performance work"
+  echo "  \033[32mci/workflow-change\033[0m → CI/CD changes"
+  echo "  \033[32mbuild/tool-change\033[0m → build tool changes"
+  echo ""
+  echo "  \033[90mExamples of valid branch names:\033[0m"
+  echo "  feat/add-payments-module"
+  echo "  fix/cli-windows-path-bug"
+  echo "  chore/bump-stripe-v14"
+  echo "  docs/update-contributing-guide"
+  echo ""
+  echo "  \033[90mRename your branch:\033[0m"
+  echo "  git branch -m $BRANCH feat/your-description"
+  echo ""
+  echo "  See CONTRIBUTING.md for full branch naming guide."
+  echo ""
+  exit 1
+fi
