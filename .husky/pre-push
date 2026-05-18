@@ -1,0 +1,58 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo ""
+echo "\033[34m→ Running tests before push...\033[0m"
+echo ""
+
+# Run root tests
+npm run test:run
+ROOT_EXIT=$?
+
+if [ $ROOT_EXIT -ne 0 ]; then
+  echo ""
+  echo "\033[31m✗ ROOT TESTS FAILED\033[0m"
+  echo ""
+  echo "  Tests must pass before pushing."
+  echo "  Fix the failing tests and try again."
+  echo ""
+  exit 1
+fi
+
+# Run @charcoles/payments tests if the directory exists
+if [ -d "packages/payments" ]; then
+  echo "\033[34m→ Running @charcoles/payments tests...\033[0m"
+  cd packages/payments && npm run test:run
+  PAYMENTS_EXIT=$?
+  cd ../..
+
+  if [ $PAYMENTS_EXIT -ne 0 ]; then
+    echo ""
+    echo "\033[31m✗ @charcoles/payments TESTS FAILED\033[0m"
+    echo ""
+    echo "  Fix the failing tests in packages/payments and try again."
+    echo ""
+    exit 1
+  fi
+fi
+
+# Run @charcoles/swagger tests if the directory exists
+if [ -d "packages/swagger" ]; then
+  echo "\033[34m→ Running @charcoles/swagger tests...\033[0m"
+  cd packages/swagger && npm run test:run
+  SWAGGER_EXIT=$?
+  cd ../..
+
+  if [ $SWAGGER_EXIT -ne 0 ]; then
+    echo ""
+    echo "\033[31m✗ @charcoles/swagger TESTS FAILED\033[0m"
+    echo ""
+    echo "  Fix the failing tests in packages/swagger and try again."
+    echo ""
+    exit 1
+  fi
+fi
+
+echo ""
+echo "\033[32m✓ All tests passed. Pushing...\033[0m"
+echo ""
