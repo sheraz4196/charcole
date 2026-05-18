@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { StripeAdapter } from "../adapters/StripeAdapter.js";
-import { PaymentError } from "../errors/PaymentError.js";
 
+// Mock stripe before importing the adapter so the adapter picks up the mock
 vi.mock("stripe", () => {
   return {
     default: vi.fn().mockImplementation(() => ({
@@ -18,6 +17,9 @@ vi.mock("stripe", () => {
     })),
   };
 });
+
+import { StripeAdapter } from "../adapters/StripeAdapter.js";
+import { PaymentError } from "../errors/PaymentError.js";
 
 describe("StripeAdapter", () => {
   let adapter;

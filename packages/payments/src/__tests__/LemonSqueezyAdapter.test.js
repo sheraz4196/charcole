@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { LemonSqueezyAdapter } from "../adapters/LemonSqueezyAdapter.js";
-import { PaymentError } from "../errors/PaymentError.js";
 
+// Ensure the external SDK is mocked before importing the adapter
 vi.mock("@lemonsqueezy/lemonsqueezy.js", () => {
   return {
     lemonSqueezySetup: vi.fn(),
@@ -9,6 +8,9 @@ vi.mock("@lemonsqueezy/lemonsqueezy.js", () => {
     getOrder: vi.fn(),
   };
 });
+
+import { LemonSqueezyAdapter } from "../adapters/LemonSqueezyAdapter.js";
+import { PaymentError } from "../errors/PaymentError.js";
 
 describe("LemonSqueezyAdapter", () => {
   let adapter;
