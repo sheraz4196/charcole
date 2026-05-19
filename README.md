@@ -436,7 +436,7 @@ We welcome contributions! Please:
 5. Document new modules thoroughly
 6. Update README.md for significant changes
 7. If adding Swagger docs, use Zod schemas as single source of truth
-
+8. Read the full [Contribution Guidlines before Starting](https://github.com/sheraz4196/charcole/blob/main/CONTRIBUTING.md)
 Good luck!!!
 
 ## 📄 License
