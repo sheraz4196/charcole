@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { existsSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { existsSync } from "fs";
 import {
   getHealth,
   createItem,
@@ -23,18 +23,15 @@ router.post("/items", validateRequest(createItemSchema), createItem);
 // 🔐 Auth routes
 router.use("/auth", authRoutes);
 
-// 💳 Payment routes — only loaded if the payments module was included during scaffolding
+// 💳 Payments routes — only loaded when the module exists
 const paymentsRoutesPath = join(
   __dirname,
   "../modules/payments/payments.routes.ts",
 );
+
 if (existsSync(paymentsRoutesPath)) {
-  try {
-    const { default: paymentsRoutes } = await import(paymentsRoutesPath);
-    router.use("/payments", paymentsRoutes);
-  } catch (err) {
-    console.error("Failed to load payments routes:", err);
-  }
+  const { default: paymentsRoutes } = await import(paymentsRoutesPath);
+  router.use("/payments", paymentsRoutes);
 }
 
 // 🔐 Protected routes (REQUIRED BEARER TOKEN FOR THEM)

@@ -11,7 +11,6 @@ import { validateRequest } from "../middlewares/validateRequest.js";
 import { requireAuth } from "../modules/auth/auth.middlewares.js";
 import protectedRoutes from "./protected.js";
 import authRoutes from "../modules/auth/auth.routes.js";
-import paymentsRoutes from "../modules/payments/payments.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const router = Router();
@@ -25,11 +24,12 @@ router.post("/items", validateRequest(createItemSchema), createItem);
 // 🔐 Auth routes
 router.use("/auth", authRoutes);
 
-// Payments routes — only loaded if the payments module was included during scaffolding
+// 💳 Payments routes — only loaded when the module exists
 const paymentsRoutesPath = join(
   __dirname,
   "../modules/payments/payments.routes.js",
 );
+
 if (existsSync(paymentsRoutesPath)) {
   const { default: paymentsRoutes } = await import(paymentsRoutesPath);
   router.use("/payments", paymentsRoutes);
